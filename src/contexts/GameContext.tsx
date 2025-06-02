@@ -1,87 +1,72 @@
 
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import { User as SupabaseUser } from '@supabase/supabase-js';
 import { User, Club, League, Manager } from '@/types/game';
-import { GameService } from '@/services/gameService';
+import { AuthService, Manager as AuthManager } from '@/services/authService';
+import { SupabaseGameService } from '@/services/supabaseGameService';
+import { supabase } from '@/integrations/supabase/client';
 
 interface GameState {
-  user: User | null;
-  availableClubs: Club[];
+  user: SupabaseUser | null;
+  manager: AuthManager | null;
+  currentClub: Club | null;
   currentLeague: League | null;
   availableLeagues: League[];
+  isLoading: boolean;
+  hasManager: boolean;
 }
 
 type GameAction = 
-  | { type: 'LOGIN'; payload: { email: string; name: string } }
-  | { type: 'LOGOUT' }
-  | { type: 'SET_SCREEN'; payload: User['currentScreen'] }
-  | { type: 'SELECT_CLUB'; payload: string }
-  | { type: 'CREATE_LEAGUE'; payload: League }
-  | { type: 'JOIN_LEAGUE'; payload: string }
-  | { type: 'SET_AVAILABLE_LEAGUES'; payload: League[] };
+  | { type: 'SET_USER'; payload: { user: SupabaseUser | null; manager: AuthManager | null } }
+  | { type: 'SET_MANAGER'; payload: AuthManager }
+  | { type: 'SET_CLUB'; payload: Club | null }
+  | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'LOGOUT' };
 
 const initialState: GameState = {
   user: null,
-  availableClubs: [],
+  manager: null,
+  currentClub: null,
   currentLeague: null,
-  availableLeagues: []
+  availableLeagues: [],
+  isLoading: true,
+  hasManager: false
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
-    case 'LOGIN':
+    case 'SET_USER':
       return {
         ...state,
-        user: {
-          id: Math.random().toString(36).substr(2, 9),
-          email: action.payload.email,
-          name: action.payload.name,
-          currentScreen: 'home'
-        },
-        availableClubs: GameService.getAllClubs()
+        user: action.payload.user,
+        manager: action.payload.manager,
+        hasManager: !!action.payload.manager,
+        isLoading: false
+      };
+    
+    case 'SET_MANAGER':
+      return {
+        ...state,
+        manager: action.payload,
+        hasManager: true
+      };
+      
+    case 'SET_CLUB':
+      return {
+        ...state,
+        currentClub: action.payload
+      };
+    
+    case 'SET_LOADING':
+      return {
+        ...state,
+        isLoading: action.payload
       };
     
     case 'LOGOUT':
-      return initialState;
-    
-    case 'SET_SCREEN':
       return {
-        ...state,
-        user: state.user ? { ...state.user, currentScreen: action.payload } : null
-      };
-    
-    case 'SELECT_CLUB':
-      if (!state.user) return state;
-      const selectedClub = state.availableClubs.find(club => club.id === action.payload);
-      if (!selectedClub) return state;
-      
-      const manager = GameService.createManagerForUser(state.user.name, state.user.email, selectedClub.id);
-      return {
-        ...state,
-        user: {
-          ...state.user,
-          manager,
-          currentScreen: 'dashboard'
-        }
-      };
-    
-    case 'CREATE_LEAGUE':
-      return {
-        ...state,
-        currentLeague: action.payload,
-        availableLeagues: [...state.availableLeagues, action.payload]
-      };
-    
-    case 'JOIN_LEAGUE':
-      const league = state.availableLeagues.find(l => l.inviteCode === action.payload);
-      return {
-        ...state,
-        currentLeague: league || state.currentLeague
-      };
-    
-    case 'SET_AVAILABLE_LEAGUES':
-      return {
-        ...state,
-        availableLeagues: action.payload
+        ...initialState,
+        isLoading: false
       };
     
     default:
@@ -92,13 +77,99 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 const GameContext = createContext<{
   state: GameState;
   dispatch: React.Dispatch<GameAction>;
+  selectClub: (clubId: string) => Promise<void>;
+  refreshClub: () => Promise<void>;
 } | null>(null);
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState);
   
+  useEffect(() => {
+    // Verificar se já existe um usuário logado
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const manager = await AuthService.getManagerByUserId(session.user.id);
+          dispatch({ 
+            type: 'SET_USER', 
+            payload: { user: session.user, manager } 
+          });
+          
+          // Se tem manager e clube, carregar o clube
+          if (manager?.current_club_id) {
+            const club = await SupabaseGameService.getClubById(manager.current_club_id);
+            dispatch({ type: 'SET_CLUB', payload: club });
+          }
+        } else {
+          dispatch({ type: 'SET_LOADING', payload: false });
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar autenticação:', error);
+        dispatch({ type: 'SET_LOADING', payload: false });
+      }
+    };
+
+    initializeAuth();
+
+    // Listener para mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user) {
+          const manager = await AuthService.getManagerByUserId(session.user.id);
+          dispatch({ 
+            type: 'SET_USER', 
+            payload: { user: session.user, manager } 
+          });
+          
+          if (manager?.current_club_id) {
+            const club = await SupabaseGameService.getClubById(manager.current_club_id);
+            dispatch({ type: 'SET_CLUB', payload: club });
+          }
+        } else if (event === 'SIGNED_OUT') {
+          dispatch({ type: 'LOGOUT' });
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const selectClub = async (clubId: string) => {
+    try {
+      if (!state.manager) return;
+      
+      // Atualizar o manager com o clube escolhido
+      await AuthService.updateManager(state.manager.id, { 
+        current_club_id: clubId 
+      });
+      
+      // Carregar dados do clube
+      const club = await SupabaseGameService.getClubById(clubId);
+      dispatch({ type: 'SET_CLUB', payload: club });
+      
+      // Atualizar manager no estado
+      const updatedManager = { ...state.manager, current_club_id: clubId };
+      dispatch({ type: 'SET_MANAGER', payload: updatedManager });
+      
+    } catch (error) {
+      console.error('Erro ao selecionar clube:', error);
+    }
+  };
+
+  const refreshClub = async () => {
+    try {
+      if (!state.manager?.current_club_id) return;
+      
+      const club = await SupabaseGameService.getClubById(state.manager.current_club_id);
+      dispatch({ type: 'SET_CLUB', payload: club });
+    } catch (error) {
+      console.error('Erro ao atualizar clube:', error);
+    }
+  };
+  
   return (
-    <GameContext.Provider value={{ state, dispatch }}>
+    <GameContext.Provider value={{ state, dispatch, selectClub, refreshClub }}>
       {children}
     </GameContext.Provider>
   );

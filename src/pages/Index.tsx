@@ -6,27 +6,150 @@ import ClubSelectionScreen from '@/components/game/ClubSelectionScreen';
 import Dashboard from '@/components/game/Dashboard';
 import LeagueCreationScreen from '@/components/game/LeagueCreationScreen';
 import LeagueBrowserScreen from '@/components/game/LeagueBrowserScreen';
+import LineupScreen from '@/components/game/LineupScreen';
+import LeagueStandingsScreen from '@/components/game/LeagueStandingsScreen';
+import { useState } from 'react';
+
+type Screen = 'auth' | 'home' | 'club-selection' | 'dashboard' | 'league-creation' | 'league-browser' | 'lineup' | 'standings';
 
 const GameApp = () => {
-  const { state } = useGame();
+  const { state, dispatch, selectClub, refreshClub } = useGame();
+  const [currentScreen, setCurrentScreen] = useState<Screen>('auth');
+  const [selectedLeague, setSelectedLeague] = useState<{ id: string; name: string } | null>(null);
 
-  if (!state.user) {
-    return <AuthScreen />;
+  // Loading screen
+  if (state.isLoading) {
+    return (
+      <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
+        <div className="text-retro-white-lines font-pixel text-xl animate-pulse">
+          Carregando Football Manager Retrô...
+        </div>
+      </div>
+    );
   }
 
-  switch (state.user.currentScreen) {
+  // Não logado - mostrar tela de auth
+  if (!state.user) {
+    return (
+      <AuthScreen 
+        onAuthSuccess={(user, hasManager) => {
+          if (hasManager) {
+            setCurrentScreen('home');
+          } else {
+            setCurrentScreen('club-selection');
+          }
+        }}
+      />
+    );
+  }
+
+  // Logado mas sem manager ou clube - mostrar seleção de clube
+  if (!state.hasManager || !state.manager?.current_club_id) {
+    return (
+      <ClubSelectionScreen 
+        onBack={() => setCurrentScreen('home')}
+        onSelectClub={async (clubId) => {
+          await selectClub(clubId);
+          setCurrentScreen('dashboard');
+        }}
+      />
+    );
+  }
+
+  // Navegação baseada na tela atual
+  switch (currentScreen) {
     case 'home':
-      return <HomeScreen />;
-    case 'club-selection':
-      return <ClubSelectionScreen />;
+      return (
+        <HomeScreen 
+          onNavigate={(screen) => {
+            if (screen === 'dashboard') {
+              setCurrentScreen('dashboard');
+            } else if (screen === 'league-creation') {
+              setCurrentScreen('league-creation');
+            } else if (screen === 'league-browser') {
+              setCurrentScreen('league-browser');
+            }
+          }}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
+        />
+      );
+
     case 'dashboard':
-      return <Dashboard />;
+      return (
+        <Dashboard 
+          onBack={() => setCurrentScreen('home')}
+          onNavigateToLineup={() => setCurrentScreen('lineup')}
+          onNavigateToStandings={(leagueId, leagueName) => {
+            setSelectedLeague({ id: leagueId, name: leagueName });
+            setCurrentScreen('standings');
+          }}
+          onRefreshClub={refreshClub}
+        />
+      );
+
+    case 'lineup':
+      return state.currentClub ? (
+        <LineupScreen 
+          clubId={state.currentClub.id}
+          players={state.currentClub.players}
+          formation={state.currentClub.formation}
+          onBack={() => setCurrentScreen('dashboard')}
+          onSave={() => {
+            refreshClub();
+            setCurrentScreen('dashboard');
+          }}
+        />
+      ) : null;
+
+    case 'standings':
+      return selectedLeague ? (
+        <LeagueStandingsScreen 
+          leagueId={selectedLeague.id}
+          leagueName={selectedLeague.name}
+          onBack={() => setCurrentScreen('dashboard')}
+        />
+      ) : null;
+
     case 'league-creation':
-      return <LeagueCreationScreen />;
+      return (
+        <LeagueCreationScreen 
+          onBack={() => setCurrentScreen('home')}
+          onLeagueCreated={() => setCurrentScreen('home')}
+        />
+      );
+
     case 'league-browser':
-      return <LeagueBrowserScreen />;
+      return (
+        <LeagueBrowserScreen 
+          onBack={() => setCurrentScreen('home')}
+          onLeagueJoined={() => setCurrentScreen('home')}
+        />
+      );
+
+    case 'club-selection':
+      return (
+        <ClubSelectionScreen 
+          onBack={() => setCurrentScreen('home')}
+          onSelectClub={async (clubId) => {
+            await selectClub(clubId);
+            setCurrentScreen('dashboard');
+          }}
+        />
+      );
+
     default:
-      return <HomeScreen />;
+      return (
+        <HomeScreen 
+          onNavigate={(screen) => setCurrentScreen(screen as Screen)}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
+        />
+      );
   }
 };
 

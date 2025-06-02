@@ -1,58 +1,107 @@
+
 import { useState, useEffect } from 'react';
-import { GameService } from '@/services/gameService';
-import { Manager, Club, Match } from '@/types/game';
 import { useGame } from '@/contexts/GameContext';
-import Header from './Header';
-import PlayerCard from './PlayerCard';
+import { Match } from '@/types/game';
 import MatchResult from './MatchResult';
 import TrainingManager from './TrainingManager';
 import PreTalkManager from './PreTalkManager';
+import PlayerCard from './PlayerCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Users, Calendar, Trophy, Gamepad, ArrowLeft, Settings } from 'lucide-react';
+import { Users, Calendar, Trophy, Gamepad, ArrowLeft, Settings, Target } from 'lucide-react';
+import { SupabaseGameService } from '@/services/supabaseGameService';
+import { useToast } from '@/components/ui/use-toast';
 
-const Dashboard = () => {
-  const { state, dispatch } = useGame();
-  const [manager, setManager] = useState<Manager | null>(null);
-  const [club, setClub] = useState<Club | null>(null);
+interface DashboardProps {
+  onBack: () => void;
+  onNavigateToLineup: () => void;
+  onNavigateToStandings: (leagueId: string, leagueName: string) => void;
+  onRefreshClub: () => void;
+}
+
+const Dashboard = ({ onBack, onNavigateToLineup, onNavigateToStandings, onRefreshClub }: DashboardProps) => {
+  const { state } = useGame();
   const [recentMatches, setRecentMatches] = useState<Match[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
+
+  const { manager, currentClub: club } = state;
 
   useEffect(() => {
-    if (state.user?.manager) {
-      const managerData = state.user.manager;
-      const clubData = GameService.getClubById(managerData.currentClub);
-      
-      setManager(managerData);
-      setClub(clubData);
-
-      if (clubData) {
-        const matches = [
-          GameService.generateRandomMatch(clubData.name, 'Atlético Cidade'),
-          GameService.generateRandomMatch('União FC', clubData.name),
-          GameService.generateRandomMatch(clubData.name, 'Esporte Clube'),
-        ];
-        setRecentMatches(matches);
-      }
+    if (club) {
+      // Simular algumas partidas anteriores para demonstração
+      const matches = [
+        generateDemoMatch(club.name, 'Atlético Cidade'),
+        generateDemoMatch('União FC', club.name),
+        generateDemoMatch(club.name, 'Esporte Clube'),
+      ];
+      setRecentMatches(matches);
     }
-  }, [state.user]);
+  }, [club]);
 
-  const handleSimulateMatch = () => {
-    if (!club) return;
+  const generateDemoMatch = (homeTeam: string, awayTeam: string): Match => {
+    const homeScore = Math.floor(Math.random() * 4);
+    const awayScore = Math.floor(Math.random() * 4);
     
-    const newMatch = GameService.generateRandomMatch(club.name, 'Rival FC');
-    setRecentMatches(prev => [newMatch, ...prev.slice(0, 4)]);
+    return {
+      id: `demo_${Date.now()}_${Math.random()}`,
+      homeTeam,
+      awayTeam,
+      date: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000).toISOString(),
+      status: 'finished',
+      round: 1,
+      leagueId: 'demo',
+      score: {
+        home: homeScore,
+        away: awayScore
+      },
+      events: []
+    };
   };
 
-  const handleBackToHome = () => {
-    dispatch({ type: 'SET_SCREEN', payload: 'home' });
+  const handleSimulateMatch = async () => {
+    if (!club) return;
+    
+    setLoading(true);
+    try {
+      const opponentClubs = ['Atlético Cidade', 'União FC', 'Esporte Clube', 'Grêmio Local', 'Atlético Rural'];
+      const opponent = opponentClubs[Math.floor(Math.random() * opponentClubs.length)];
+      
+      // Para demonstração, usar simulação local
+      const newMatch = generateDemoMatch(club.name, opponent);
+      setRecentMatches(prev => [newMatch, ...prev.slice(0, 4)]);
+      
+      toast({
+        title: "Partida simulada!",
+        description: `${newMatch.homeTeam} ${newMatch.score?.home} x ${newMatch.score?.away} ${newMatch.awayTeam}`,
+      });
+      
+      // Atualizar clube após a partida
+      await onRefreshClub();
+    } catch (error) {
+      console.error('Erro ao simular partida:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao simular partida",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateTeamOverall = (players: any[]) => {
+    if (players.length === 0) return 0;
+    const total = players.reduce((sum, player) => sum + player.overall, 0);
+    return Math.round(total / players.length);
   };
 
   if (!manager || !club) {
     return (
       <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
         <div className="text-retro-white-lines font-pixel text-xl animate-pulse">
-          Carregando Football Manager Retrô...
+          Carregando dados do clube...
         </div>
       </div>
     );
@@ -65,12 +114,12 @@ const Dashboard = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button
-                onClick={handleBackToHome}
+                onClick={onBack}
                 variant="outline"
                 className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Menu
+                <span>Menu</span>
               </Button>
               <div className="w-12 h-12 bg-retro-yellow-highlight rounded-lg flex items-center justify-center">
                 <Trophy className="w-6 h-6 text-retro-green-dark" />
@@ -137,10 +186,11 @@ const Dashboard = () => {
             <CardContent className="p-4">
               <Button 
                 onClick={handleSimulateMatch}
+                disabled={loading}
                 className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
               >
                 <Gamepad className="w-4 h-4 mr-2" />
-                Simular Jogo
+                {loading ? 'Simulando...' : 'Simular Jogo'}
               </Button>
             </CardContent>
           </Card>
@@ -149,18 +199,18 @@ const Dashboard = () => {
         <Tabs defaultValue="squad" className="w-full">
           <TabsList className="grid w-full grid-cols-6 bg-retro-gray-concrete">
             <TabsTrigger value="squad" className="font-pixel">Elenco</TabsTrigger>
+            <TabsTrigger value="lineup" className="font-pixel">Escalação</TabsTrigger>
             <TabsTrigger value="training" className="font-pixel">Treinos</TabsTrigger>
             <TabsTrigger value="tactics" className="font-pixel">Táticas</TabsTrigger>
             <TabsTrigger value="pretalk" className="font-pixel">Preleção</TabsTrigger>
             <TabsTrigger value="matches" className="font-pixel">Partidas</TabsTrigger>
-            <TabsTrigger value="transfer" className="font-pixel">Mercado</TabsTrigger>
           </TabsList>
           
           <TabsContent value="squad" className="space-y-4">
             <Card className="bg-retro-gray-concrete border-retro-white-lines">
               <CardHeader>
                 <CardTitle className="font-pixel text-retro-white-lines">
-                  Elenco - Overall Médio: {GameService.calculateTeamOverall(club.players)}
+                  Elenco - Overall Médio: {calculateTeamOverall(club.players)}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -169,6 +219,26 @@ const Dashboard = () => {
                     <PlayerCard key={player.id} player={player} showDetails />
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="lineup" className="space-y-4">
+            <Card className="bg-retro-gray-concrete border-retro-white-lines">
+              <CardHeader>
+                <CardTitle className="font-pixel text-retro-white-lines">Gestão de Escalação</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-retro-white-lines font-pixel text-sm">
+                  Configure sua escalação titular e banco de reservas baseado na formação escolhida.
+                </p>
+                <Button
+                  onClick={onNavigateToLineup}
+                  className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
+                >
+                  <Target className="w-4 h-4 mr-2" />
+                  Gerenciar Escalação
+                </Button>
               </CardContent>
             </Card>
           </TabsContent>
@@ -191,6 +261,7 @@ const Dashboard = () => {
                       <option>4-3-3</option>
                       <option>3-5-2</option>
                       <option>5-3-2</option>
+                      <option>4-2-3-1</option>
                     </select>
                   </div>
                   <div>
@@ -212,38 +283,38 @@ const Dashboard = () => {
           </TabsContent>
           
           <TabsContent value="matches" className="space-y-4">
-            <Card className="bg-retro-gray-concrete border-retro-white-lines">
-              <CardHeader>
-                <CardTitle className="font-pixel text-retro-white-lines">Últimas Partidas</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {recentMatches.map(match => (
-                    <MatchResult key={match.id} match={match} />
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          
-          <TabsContent value="transfer" className="space-y-4">
-            <Card className="bg-retro-gray-concrete border-retro-white-lines">
-              <CardHeader>
-                <CardTitle className="font-pixel text-retro-white-lines">Mercado de Transferências</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {GameService.getPlayersByPosition().slice(0, 6).map(player => (
-                    <div key={player.id} className="space-y-2">
-                      <PlayerCard player={player} showDetails />
-                      <Button className="w-full bg-retro-green-field text-retro-white-lines hover:bg-green-600 font-pixel">
-                        Contratar - €{player.price.toLocaleString()}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="bg-retro-gray-concrete border-retro-white-lines">
+                <CardHeader>
+                  <CardTitle className="font-pixel text-retro-white-lines">Últimas Partidas</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {recentMatches.map(match => (
+                      <MatchResult key={match.id} match={match} />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-retro-gray-concrete border-retro-white-lines">
+                <CardHeader>
+                  <CardTitle className="font-pixel text-retro-white-lines">Classificação</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-retro-white-lines font-pixel text-sm">
+                    Veja a classificação das suas ligas ativas.
+                  </p>
+                  <Button
+                    onClick={() => onNavigateToStandings('demo', 'Liga Demonstração')}
+                    className="w-full bg-retro-blue-team text-retro-white-lines hover:bg-blue-600 font-pixel"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Ver Classificação
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

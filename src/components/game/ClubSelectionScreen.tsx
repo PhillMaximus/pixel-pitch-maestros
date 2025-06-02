@@ -1,21 +1,44 @@
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useGame } from '@/contexts/GameContext';
-import { GameService } from '@/services/gameService';
 import { ArrowLeft, Trophy, Users, DollarSign } from 'lucide-react';
+import { Club } from '@/types/game';
+import { SupabaseGameService } from '@/services/supabaseGameService';
 
-const ClubSelectionScreen = () => {
-  const { state, dispatch } = useGame();
-  const availableClubs = GameService.getAvailableClubsForSelection();
+interface ClubSelectionScreenProps {
+  onBack: () => void;
+  onSelectClub: (clubId: string) => void;
+}
 
-  const handleSelectClub = (clubId: string) => {
-    dispatch({ type: 'SELECT_CLUB', payload: clubId });
+const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps) => {
+  const [availableClubs, setAvailableClubs] = useState<Club[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadAvailableClubs();
+  }, []);
+
+  const loadAvailableClubs = async () => {
+    try {
+      const clubs = await SupabaseGameService.getAvailableClubs();
+      setAvailableClubs(clubs);
+    } catch (error) {
+      console.error('Erro ao carregar clubes:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleBack = () => {
-    dispatch({ type: 'SET_SCREEN', payload: 'home' });
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
+        <div className="text-retro-white-lines font-pixel text-xl animate-pulse">
+          Carregando clubes disponíveis...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-retro-green-field">
@@ -23,12 +46,12 @@ const ClubSelectionScreen = () => {
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center space-x-4">
             <Button
-              onClick={handleBack}
+              onClick={onBack}
               variant="outline"
               className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              <span>Voltar</span>
             </Button>
             <div>
               <h1 className="text-xl font-pixel font-bold">Escolha seu Clube</h1>
@@ -107,7 +130,7 @@ const ClubSelectionScreen = () => {
                   </div>
                   
                   <Button
-                    onClick={() => handleSelectClub(club.id)}
+                    onClick={() => onSelectClub(club.id)}
                     className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
                   >
                     Escolher Este Clube

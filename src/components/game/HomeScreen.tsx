@@ -1,26 +1,20 @@
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGame } from '@/contexts/GameContext';
 import { Trophy, Users, Plus, Search, Settings, LogOut } from 'lucide-react';
 
-const HomeScreen = () => {
-  const { state, dispatch } = useGame();
-
-  const handleNavigation = (screen: 'club-selection' | 'league-creation' | 'league-browser') => {
-    dispatch({ type: 'SET_SCREEN', payload: screen });
-  };
+const HomeScreen = ({ onNavigate, onLogout }: { 
+  onNavigate: (screen: string) => void;
+  onLogout: () => void;
+}) => {
+  const { state } = useGame();
 
   const handleGameEntry = () => {
-    if (state.user?.manager) {
-      dispatch({ type: 'SET_SCREEN', payload: 'dashboard' });
+    if (state.manager?.current_club_id) {
+      onNavigate('dashboard');
     } else {
-      dispatch({ type: 'SET_SCREEN', payload: 'club-selection' });
+      onNavigate('club-selection');
     }
-  };
-
-  const handleLogout = () => {
-    dispatch({ type: 'LOGOUT' });
   };
 
   return (
@@ -34,18 +28,18 @@ const HomeScreen = () => {
             <div>
               <h1 className="text-xl font-pixel font-bold">Football Manager Retrô</h1>
               <p className="text-sm text-retro-yellow-highlight">
-                Bem-vindo, {state.user?.name}!
+                Bem-vindo, {state.user?.user_metadata?.name || state.user?.email}!
               </p>
             </div>
           </div>
           
           <Button
-            onClick={handleLogout}
+            onClick={onLogout}
             variant="outline"
             className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
           >
             <LogOut className="w-4 h-4 mr-2" />
-            Sair
+            <span>Sair</span>
           </Button>
         </div>
       </div>
@@ -97,7 +91,7 @@ const HomeScreen = () => {
                   Crie uma liga privada e convide seus amigos para jogar
                 </p>
                 <Button
-                  onClick={() => handleNavigation('league-creation')}
+                  onClick={() => onNavigate('league-creation')}
                   className="w-full bg-retro-green-field text-retro-white-lines hover:bg-green-600 font-pixel"
                 >
                   Criar Liga
@@ -117,7 +111,7 @@ const HomeScreen = () => {
                   Encontre e participe de campeonatos criados por outros jogadores
                 </p>
                 <Button
-                  onClick={() => handleNavigation('league-browser')}
+                  onClick={() => onNavigate('league-browser')}
                   className="w-full bg-retro-blue-team text-retro-white-lines hover:bg-blue-600 font-pixel"
                 >
                   Buscar Ligas

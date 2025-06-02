@@ -1,115 +1,174 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useGame } from '@/contexts/GameContext';
-import { Trophy, Users } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Trophy, UserPlus, LogIn } from 'lucide-react';
+import { AuthService } from '@/services/authService';
+import { useToast } from '@/components/ui/use-toast';
 
-const AuthScreen = () => {
+interface AuthScreenProps {
+  onAuthSuccess: (user: any, hasManager: boolean) => void;
+}
+
+const AuthScreen = ({ onAuthSuccess }: AuthScreenProps) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const { dispatch } = useGame();
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!email || !password || (!isLogin && !name)) {
-      alert('Por favor, preencha todos os campos');
+      toast({
+        title: "Erro",
+        description: "Por favor, preencha todos os campos",
+        variant: "destructive",
+      });
       return;
     }
 
-    const displayName = isLogin ? email.split('@')[0] : name;
-    dispatch({ type: 'LOGIN', payload: { email, name: displayName } });
+    setLoading(true);
+    try {
+      if (isLogin) {
+        const { user, error } = await AuthService.signIn(email, password);
+        if (error) {
+          toast({
+            title: "Erro no login",
+            description: error.message || "Email ou senha incorretos",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (user) {
+          const manager = await AuthService.getManagerByUserId(user.id);
+          onAuthSuccess(user, !!manager);
+        }
+      } else {
+        const { user, error } = await AuthService.signUp(email, password, name);
+        if (error) {
+          toast({
+            title: "Erro no cadastro",
+            description: error.message || "Erro ao criar conta",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        if (user) {
+          toast({
+            title: "Conta criada!",
+            description: "Faça login para continuar",
+          });
+          setIsLogin(true);
+          setEmail('');
+          setPassword('');
+          setName('');
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro inesperado",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-retro-green-field flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-16 h-16 bg-retro-yellow-highlight rounded-lg flex items-center justify-center mr-3">
-              <Trophy className="w-8 h-8 text-retro-green-dark" />
-            </div>
-            <h1 className="text-3xl font-pixel font-bold text-retro-white-lines">
-              Football Manager Retrô
-            </h1>
+      <Card className="w-full max-w-md bg-retro-gray-concrete border-retro-white-lines border-2">
+        <CardHeader className="text-center">
+          <div className="mx-auto w-16 h-16 bg-retro-yellow-highlight rounded-lg flex items-center justify-center mb-4">
+            <Trophy className="w-8 h-8 text-retro-green-dark" />
           </div>
-          <p className="text-retro-white-lines opacity-80 font-pixel">
-            Gerencie seu clube dos sonhos!
+          <CardTitle className="font-pixel text-retro-white-lines text-xl">
+            Football Manager Retrô
+          </CardTitle>
+          <p className="text-retro-white-lines opacity-80 font-pixel text-sm">
+            {isLogin ? 'Entre na sua conta' : 'Crie sua conta de treinador'}
           </p>
-        </div>
-
-        <Card className="bg-retro-gray-concrete border-retro-white-lines border-2">
-          <CardHeader>
-            <CardTitle className="font-pixel text-retro-white-lines text-center">
-              {isLogin ? 'Entrar no Jogo' : 'Criar Conta'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div>
-                  <label className="block text-retro-white-lines font-pixel mb-2">
-                    Nome do Treinador
-                  </label>
-                  <Input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="bg-retro-green-dark text-retro-white-lines border-retro-white-lines font-pixel"
-                    placeholder="Digite seu nome"
-                  />
-                </div>
-              )}
-              
+        </CardHeader>
+        
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {!isLogin && (
               <div>
-                <label className="block text-retro-white-lines font-pixel mb-2">
-                  E-mail
-                </label>
                 <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="bg-retro-green-dark text-retro-white-lines border-retro-white-lines font-pixel"
-                  placeholder="seu@email.com"
+                  type="text"
+                  placeholder="Nome do treinador"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="bg-retro-gray-dark border-retro-white-lines text-retro-white-lines font-pixel"
+                  disabled={loading}
                 />
               </div>
-              
-              <div>
-                <label className="block text-retro-white-lines font-pixel mb-2">
-                  Senha
-                </label>
-                <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-retro-green-dark text-retro-white-lines border-retro-white-lines font-pixel"
-                  placeholder="••••••••"
-                />
-              </div>
-              
-              <Button 
-                type="submit"
-                className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel font-bold"
-              >
-                {isLogin ? 'Entrar' : 'Criar Conta'}
-              </Button>
-            </form>
+            )}
             
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setIsLogin(!isLogin)}
-                className="text-retro-yellow-highlight hover:text-yellow-300 font-pixel text-sm underline"
-              >
-                {isLogin ? 'Não tem conta? Cadastre-se' : 'Já tem conta? Faça login'}
-              </button>
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="bg-retro-gray-dark border-retro-white-lines text-retro-white-lines font-pixel"
+                disabled={loading}
+              />
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="bg-retro-gray-dark border-retro-white-lines text-retro-white-lines font-pixel"
+                disabled={loading}
+              />
+            </div>
+            
+            <Button
+              type="submit"
+              className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
+              disabled={loading}
+            >
+              {loading ? (
+                <span>Carregando...</span>
+              ) : isLogin ? (
+                <>
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Entrar
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  Cadastrar
+                </>
+              )}
+            </Button>
+          </form>
+          
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setEmail('');
+                setPassword('');
+                setName('');
+              }}
+              className="text-retro-yellow-highlight font-pixel text-sm hover:text-yellow-300 transition-colors"
+              disabled={loading}
+            >
+              {isLogin ? 'Criar nova conta' : 'Já tem uma conta? Entrar'}
+            </button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
