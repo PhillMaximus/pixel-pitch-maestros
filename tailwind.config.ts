@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Cores retrô para o jogo
+				retro: {
+					'green-field': '#2D8A2F',
+					'green-dark': '#1B5E1F',
+					'yellow-highlight': '#FFD700',
+					'brown-dirt': '#8B4513',
+					'sky-blue': '#87CEEB',
+					'red-team': '#DC143C',
+					'blue-team': '#4169E1',
+					'gray-concrete': '#696969',
+					'white-lines': '#F5F5F5'
 				}
 			},
 			borderRadius: {
@@ -84,11 +97,25 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				'pixel-bounce': {
+					'0%, 100%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-4px)' }
+				},
+				'score-flash': {
+					'0%': { backgroundColor: '#FFD700', transform: 'scale(1)' },
+					'50%': { backgroundColor: '#FF4500', transform: 'scale(1.1)' },
+					'100%': { backgroundColor: '#FFD700', transform: 'scale(1)' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pixel-bounce': 'pixel-bounce 1s ease-in-out infinite',
+				'score-flash': 'score-flash 0.5s ease-in-out'
+			},
+			fontFamily: {
+				'pixel': ['monospace'],
 			}
 		}
 	},
