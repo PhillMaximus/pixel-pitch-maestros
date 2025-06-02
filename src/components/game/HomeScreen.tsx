@@ -11,6 +11,14 @@ const HomeScreen = () => {
     dispatch({ type: 'SET_SCREEN', payload: screen });
   };
 
+  const handleGameEntry = () => {
+    if (state.user?.manager) {
+      dispatch({ type: 'SET_SCREEN', payload: 'dashboard' });
+    } else {
+      dispatch({ type: 'SET_SCREEN', payload: 'club-selection' });
+    }
+  };
+
   const handleLogout = () => {
     dispatch({ type: 'LOGOUT' });
   };
@@ -69,7 +77,7 @@ const HomeScreen = () => {
                   }
                 </p>
                 <Button
-                  onClick={() => handleNavigation(state.user?.manager ? 'dashboard' : 'club-selection')}
+                  onClick={handleGameEntry}
                   className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
                 >
                   {state.user?.manager ? 'Continuar Jogo' : 'Escolher Clube'}

@@ -4,6 +4,8 @@ import AuthScreen from '@/components/auth/AuthScreen';
 import HomeScreen from '@/components/game/HomeScreen';
 import ClubSelectionScreen from '@/components/game/ClubSelectionScreen';
 import Dashboard from '@/components/game/Dashboard';
+import LeagueCreationScreen from '@/components/game/LeagueCreationScreen';
+import LeagueBrowserScreen from '@/components/game/LeagueBrowserScreen';
 
 const GameApp = () => {
   const { state } = useGame();
@@ -20,17 +22,9 @@ const GameApp = () => {
     case 'dashboard':
       return <Dashboard />;
     case 'league-creation':
-      return <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
-        <div className="text-retro-white-lines font-pixel text-xl">
-          Criação de Liga - Em Desenvolvimento
-        </div>
-      </div>;
+      return <LeagueCreationScreen />;
     case 'league-browser':
-      return <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
-        <div className="text-retro-white-lines font-pixel text-xl">
-          Navegador de Ligas - Em Desenvolvimento
-        </div>
-      </div>;
+      return <LeagueBrowserScreen />;
     default:
       return <HomeScreen />;
   }

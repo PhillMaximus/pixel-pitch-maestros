@@ -269,6 +269,8 @@ export class GameService {
       awayTeam,
       date: new Date().toISOString(),
       status: 'finished',
+      round: 1,
+      leagueId: 'default',
       score: {
         home: homeScore,
         away: awayScore
@@ -281,6 +283,7 @@ export class GameService {
     return {
       id: 'manager1',
       name: 'Novo Treinador',
+      email: 'novo@treinador.com',
       level: 1,
       experience: 0,
       currentClub: 'club1',
