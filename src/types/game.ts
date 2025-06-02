@@ -33,11 +33,16 @@ export interface Club {
   players: Player[];
   formation: string;
   tactic: string;
+  lineup?: string[];
+  substitutes?: string[];
+  training?: TrainingType;
+  preTalkType?: PreTalkType;
 }
 
 export interface Manager {
   id: string;
   name: string;
+  email: string;
   level: number;
   experience: number;
   currentClub: string;
@@ -65,6 +70,8 @@ export interface Match {
     away: number;
   };
   events?: MatchEvent[];
+  round: number;
+  leagueId: string;
 }
 
 export interface MatchEvent {
@@ -82,6 +89,11 @@ export interface League {
   teams: Club[];
   matches: Match[];
   table: LeagueTable[];
+  createdBy: string;
+  inviteCode: string;
+  maxTeams: number;
+  currentRound: number;
+  nextMatchDate: string;
 }
 
 export interface LeagueTable {
@@ -96,3 +108,15 @@ export interface LeagueTable {
   goalDifference: number;
   points: number;
 }
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  manager?: Manager;
+  currentScreen: 'login' | 'home' | 'club-selection' | 'dashboard' | 'league-creation' | 'league-browser';
+}
+
+export type TrainingType = 'physical' | 'tactical' | 'technical' | 'rest';
+export type PreTalkType = 'motivational' | 'aggressive' | 'calm' | 'tactical';
+export type Formation = '4-4-2' | '4-3-3' | '3-5-2' | '5-3-2' | '4-2-3-1';

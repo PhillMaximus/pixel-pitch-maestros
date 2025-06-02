@@ -1,5 +1,4 @@
-
-import { Player, Club, Manager, Match } from '@/types/game';
+import { Player, Club, Manager, Match, League, LeagueTable, TrainingType, PreTalkType } from '@/types/game';
 
 // Dados simulados para demonstração
 const SAMPLE_PLAYERS: Player[] = [
@@ -116,6 +115,22 @@ const SAMPLE_CLUBS: Club[] = [
   }
 ];
 
+const SAMPLE_LEAGUES: League[] = [
+  {
+    id: 'league1',
+    name: 'Liga dos Amigos',
+    season: '2024',
+    teams: [],
+    matches: [],
+    table: [],
+    createdBy: 'user1',
+    inviteCode: 'ABC123',
+    maxTeams: 8,
+    currentRound: 1,
+    nextMatchDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+  }
+];
+
 export class GameService {
   static getPlayersByPosition(position?: string): Player[] {
     if (!position) return SAMPLE_PLAYERS;
@@ -128,6 +143,114 @@ export class GameService {
 
   static getAllClubs(): Club[] {
     return SAMPLE_CLUBS;
+  }
+
+  static createManagerForUser(name: string, email: string, clubId: string): Manager {
+    return {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      email,
+      level: 1,
+      experience: 0,
+      currentClub: clubId,
+      salary: 15000,
+      reputation: 50,
+      achievements: []
+    };
+  }
+
+  static getAvailableClubsForSelection(): Club[] {
+    return SAMPLE_CLUBS.filter(club => club.reputation <= 70);
+  }
+
+  static updateClubTraining(clubId: string, training: TrainingType): void {
+    const club = SAMPLE_CLUBS.find(c => c.id === clubId);
+    if (club) {
+      club.training = training;
+      console.log(`Clube ${club.name} está treinando: ${training}`);
+    }
+  }
+
+  static updateClubFormation(clubId: string, formation: string): void {
+    const club = SAMPLE_CLUBS.find(c => c.id === clubId);
+    if (club) {
+      club.formation = formation;
+      console.log(`Clube ${club.name} mudou formação para: ${formation}`);
+    }
+  }
+
+  static updateClubLineup(clubId: string, lineup: string[], substitutes: string[]): void {
+    const club = SAMPLE_CLUBS.find(c => c.id === clubId);
+    if (club) {
+      club.lineup = lineup;
+      club.substitutes = substitutes;
+      console.log(`Escalação atualizada para ${club.name}`);
+    }
+  }
+
+  static setPreTalk(clubId: string, preTalkType: PreTalkType): void {
+    const club = SAMPLE_CLUBS.find(c => c.id === clubId);
+    if (club) {
+      club.preTalkType = preTalkType;
+      console.log(`Preleção definida: ${preTalkType}`);
+    }
+  }
+
+  static createLeague(name: string, maxTeams: number, createdBy: string): League {
+    const inviteCode = Math.random().toString(36).substr(2, 6).toUpperCase();
+    const newLeague: League = {
+      id: Math.random().toString(36).substr(2, 9),
+      name,
+      season: '2024',
+      teams: [],
+      matches: [],
+      table: [],
+      createdBy,
+      inviteCode,
+      maxTeams,
+      currentRound: 1,
+      nextMatchDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
+    
+    SAMPLE_LEAGUES.push(newLeague);
+    return newLeague;
+  }
+
+  static joinLeague(leagueId: string, club: Club): boolean {
+    const league = SAMPLE_LEAGUES.find(l => l.id === leagueId);
+    if (league && league.teams.length < league.maxTeams) {
+      league.teams.push(club);
+      return true;
+    }
+    return false;
+  }
+
+  static getAvailableLeagues(): League[] {
+    return SAMPLE_LEAGUES;
+  }
+
+  static getLeagueByInviteCode(inviteCode: string): League | null {
+    return SAMPLE_LEAGUES.find(league => league.inviteCode === inviteCode) || null;
+  }
+
+  static simulateMatch(homeTeam: string, awayTeam: string, leagueId: string): Match {
+    const homeScore = Math.floor(Math.random() * 4);
+    const awayScore = Math.floor(Math.random() * 4);
+    
+    return {
+      id: `match_${Date.now()}`,
+      homeTeam,
+      awayTeam,
+      date: new Date().toISOString(),
+      status: 'finished',
+      leagueId,
+      round: 1,
+      score: {
+        home: homeScore,
+        away: awayScore
+      },
+      events: []
+    };
   }
 
   static calculateTeamOverall(players: Player[]): number {
