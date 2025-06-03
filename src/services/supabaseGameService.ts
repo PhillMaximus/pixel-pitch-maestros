@@ -1,6 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { Player, Club, League, Match, MatchEvent, LeagueTable } from '@/types/game';
+import { Player, Club, League, Match, MatchEvent, LeagueTable, TrainingType, PreTalkType } from '@/types/game';
 
 export class SupabaseGameService {
   // Clube
@@ -32,6 +32,8 @@ export class SupabaseGameService {
         salary: p.salary,
         stamina: p.stamina,
         morale: p.morale,
+        is_starter: p.is_starter,
+        is_substitute: p.is_substitute,
         attributes: {
           pace: p.pace,
           shooting: p.shooting,
@@ -55,8 +57,8 @@ export class SupabaseGameService {
         players: players,
         formation: clubData.formation,
         tactic: clubData.tactic,
-        training: clubData.training_type,
-        preTalkType: clubData.pre_talk_type
+        training: clubData.training_type as TrainingType,
+        preTalkType: clubData.pre_talk_type as PreTalkType
       };
 
       return club;
@@ -93,6 +95,8 @@ export class SupabaseGameService {
           salary: p.salary,
           stamina: p.stamina,
           morale: p.morale,
+          is_starter: p.is_starter,
+          is_substitute: p.is_substitute,
           attributes: {
             pace: p.pace,
             shooting: p.shooting,
@@ -116,8 +120,8 @@ export class SupabaseGameService {
           players: players,
           formation: clubData.formation,
           tactic: clubData.tactic,
-          training: clubData.training_type,
-          preTalkType: clubData.pre_talk_type
+          training: clubData.training_type as TrainingType,
+          preTalkType: clubData.pre_talk_type as PreTalkType
         });
       }
 
@@ -241,7 +245,7 @@ export class SupabaseGameService {
       if (leagueId && leagueId !== 'friendly') {
         await supabase
           .from('matches')
-          .insert([{
+          .insert({
             id: match.id,
             league_id: leagueId,
             home_team_id: homeTeamId,
@@ -251,8 +255,8 @@ export class SupabaseGameService {
             status: 'finished',
             home_score: result.homeScore,
             away_score: result.awayScore,
-            events: events
-          }]);
+            events: JSON.stringify(events)
+          });
 
         // Atualizar classificação
         await this.updateLeagueStandings(leagueId, homeTeamId, awayTeamId, result.homeScore, result.awayScore);
@@ -266,7 +270,7 @@ export class SupabaseGameService {
   }
 
   private static calculateTeamStrength(team: Club): number {
-    const starters = team.players.filter(p => team.lineup?.includes(p.id) || team.players.indexOf(p) < 11);
+    const starters = team.players.filter(p => p.is_starter || team.players.indexOf(p) < 11);
     if (starters.length === 0) return team.reputation;
     
     const avgOverall = starters.reduce((sum, player) => sum + player.overall, 0) / starters.length;

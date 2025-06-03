@@ -8,15 +8,16 @@ import { ArrowLeft, Search, Users, Trophy, Clock, UserPlus } from 'lucide-react'
 import { GameService } from '@/services/gameService';
 import { useToast } from '@/components/ui/use-toast';
 
-const LeagueBrowserScreen = () => {
-  const { state, dispatch } = useGame();
+interface LeagueBrowserScreenProps {
+  onBack: () => void;
+  onLeagueJoined: () => void;
+}
+
+const LeagueBrowserScreen = ({ onBack, onLeagueJoined }: LeagueBrowserScreenProps) => {
+  const { state } = useGame();
   const { toast } = useToast();
   const [inviteCode, setInviteCode] = useState('');
   const [availableLeagues] = useState(GameService.getAvailableLeagues());
-
-  const handleBack = () => {
-    dispatch({ type: 'SET_SCREEN', payload: 'home' });
-  };
 
   const handleJoinByCode = () => {
     if (!inviteCode.trim()) {
@@ -47,7 +48,7 @@ const LeagueBrowserScreen = () => {
       return;
     }
 
-    dispatch({ type: 'JOIN_LEAGUE', payload: inviteCode.toUpperCase() });
+    onLeagueJoined();
     toast({
       title: "Liga encontrada!",
       description: `Você entrou na liga "${league.name}"`,
@@ -67,7 +68,7 @@ const LeagueBrowserScreen = () => {
       return;
     }
 
-    dispatch({ type: 'JOIN_LEAGUE', payload: league.inviteCode });
+    onLeagueJoined();
     toast({
       title: "Entrou na liga!",
       description: `Você entrou na liga "${league.name}"`,
@@ -89,12 +90,12 @@ const LeagueBrowserScreen = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button
-              onClick={handleBack}
+              onClick={onBack}
               variant="outline"
               className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              <span>Voltar</span>
             </Button>
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-retro-yellow-highlight rounded-lg flex items-center justify-center">
@@ -131,7 +132,7 @@ const LeagueBrowserScreen = () => {
                   className="bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
                 >
                   <Search className="w-4 h-4 mr-2" />
-                  Buscar
+                  <span>Buscar</span>
                 </Button>
               </div>
               <p className="text-retro-white-lines opacity-80 font-pixel text-xs">
@@ -200,7 +201,7 @@ const LeagueBrowserScreen = () => {
                         disabled={league.teams.length >= league.maxTeams}
                         className="w-full bg-retro-blue-team text-retro-white-lines hover:bg-blue-600 font-pixel disabled:opacity-50"
                       >
-                        {league.teams.length >= league.maxTeams ? 'Liga Lotada' : 'Entrar na Liga'}
+                        <span>{league.teams.length >= league.maxTeams ? 'Liga Lotada' : 'Entrar na Liga'}</span>
                       </Button>
                     </CardContent>
                   </Card>

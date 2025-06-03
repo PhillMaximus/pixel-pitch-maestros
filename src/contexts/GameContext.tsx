@@ -21,7 +21,10 @@ type GameAction =
   | { type: 'SET_MANAGER'; payload: AuthManager }
   | { type: 'SET_CLUB'; payload: Club | null }
   | { type: 'SET_LOADING'; payload: boolean }
-  | { type: 'LOGOUT' };
+  | { type: 'LOGOUT' }
+  | { type: 'SET_SCREEN'; payload: string }
+  | { type: 'JOIN_LEAGUE'; payload: string }
+  | { type: 'CREATE_LEAGUE'; payload: League };
 
 const initialState: GameState = {
   user: null,
@@ -68,6 +71,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...initialState,
         isLoading: false
       };
+
+    case 'SET_SCREEN':
+      // For navigation - handled by parent component
+      return state;
+
+    case 'JOIN_LEAGUE':
+      // For joining leagues - handled by parent component
+      return state;
+
+    case 'CREATE_LEAGUE':
+      // For creating leagues - handled by parent component
+      return state;
     
     default:
       return state;

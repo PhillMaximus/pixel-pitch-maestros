@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useGame } from '@/contexts/GameContext';
@@ -65,7 +66,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
               </CardHeader>
               <CardContent>
                 <p className="text-retro-white-lines opacity-80 font-pixel text-sm mb-4">
-                  {state.user?.manager ? 
+                  {state.manager ? 
                     'Continue gerenciando seu clube' : 
                     'Escolha um clube e comece sua carreira'
                   }
@@ -74,7 +75,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
                   onClick={handleGameEntry}
                   className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
                 >
-                  {state.user?.manager ? 'Continuar Jogo' : 'Escolher Clube'}
+                  {state.manager ? 'Continuar Jogo' : 'Escolher Clube'}
                 </Button>
               </CardContent>
             </Card>

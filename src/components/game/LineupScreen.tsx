@@ -12,7 +12,7 @@ interface LineupScreenProps {
   players: Player[];
   formation: string;
   onBack: () => void;
-  onSave: (lineup: string[], substitutes: string[]) => void;
+  onSave: () => void;
 }
 
 const FORMATION_POSITIONS = {
@@ -32,10 +32,10 @@ const LineupScreen = ({ clubId, players, formation, onBack, onSave }: LineupScre
   const formationPositions = FORMATION_POSITIONS[formation as keyof typeof FORMATION_POSITIONS] || FORMATION_POSITIONS['4-4-2'];
 
   useEffect(() => {
-    // Inicializar com jogadores que já estão escalados
-    const starters = players.filter(p => p.lineup?.includes(p.id));
-    const subs = players.filter(p => p.substitutes?.includes(p.id));
-    const available = players.filter(p => !starters.includes(p) && !subs.includes(p));
+    // Filtrar jogadores com base nos flags is_starter e is_substitute
+    const starters = players.filter(p => p.is_starter);
+    const subs = players.filter(p => p.is_substitute);
+    const available = players.filter(p => !p.is_starter && !p.is_substitute);
 
     setLineup(starters.map(p => p.id));
     setSubstitutes(subs.map(p => p.id));
@@ -123,7 +123,7 @@ const LineupScreen = ({ clubId, players, formation, onBack, onSave }: LineupScre
         title: "Escalação salva!",
         description: "A escalação foi atualizada com sucesso",
       });
-      onSave(lineup, substitutes);
+      onSave();
     } else {
       toast({
         title: "Erro",
@@ -131,10 +131,6 @@ const LineupScreen = ({ clubId, players, formation, onBack, onSave }: LineupScre
         variant: "destructive",
       });
     }
-  };
-
-  const getPlayersByPosition = (position: string) => {
-    return players.filter(p => p.position === position);
   };
 
   return (
@@ -148,7 +144,7 @@ const LineupScreen = ({ clubId, players, formation, onBack, onSave }: LineupScre
               className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              <span>Voltar</span>
             </Button>
             <h1 className="text-xl font-pixel font-bold">Escalação - {formation}</h1>
           </div>
@@ -158,7 +154,7 @@ const LineupScreen = ({ clubId, players, formation, onBack, onSave }: LineupScre
             className="bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
           >
             <Save className="w-4 h-4 mr-2" />
-            Salvar Escalação
+            <span>Salvar Escalação</span>
           </Button>
         </div>
       </div>

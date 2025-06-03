@@ -7,17 +7,19 @@ import { useGame } from '@/contexts/GameContext';
 import { ArrowLeft, Plus, Users, Trophy, Copy } from 'lucide-react';
 import { GameService } from '@/services/gameService';
 import { useToast } from '@/components/ui/use-toast';
+import { League } from '@/types/game';
 
-const LeagueCreationScreen = () => {
-  const { state, dispatch } = useGame();
+interface LeagueCreationScreenProps {
+  onBack: () => void;
+  onLeagueCreated: () => void;
+}
+
+const LeagueCreationScreen = ({ onBack, onLeagueCreated }: LeagueCreationScreenProps) => {
+  const { state } = useGame();
   const { toast } = useToast();
   const [leagueName, setLeagueName] = useState('');
   const [maxTeams, setMaxTeams] = useState(8);
-  const [createdLeague, setCreatedLeague] = useState(null);
-
-  const handleBack = () => {
-    dispatch({ type: 'SET_SCREEN', payload: 'home' });
-  };
+  const [createdLeague, setCreatedLeague] = useState<League | null>(null);
 
   const handleCreateLeague = () => {
     if (!leagueName.trim()) {
@@ -39,7 +41,6 @@ const LeagueCreationScreen = () => {
     }
 
     const newLeague = GameService.createLeague(leagueName, maxTeams, state.user.id);
-    dispatch({ type: 'CREATE_LEAGUE', payload: newLeague });
     setCreatedLeague(newLeague);
 
     toast({
@@ -64,12 +65,12 @@ const LeagueCreationScreen = () => {
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <Button
-              onClick={handleBack}
+              onClick={onBack}
               variant="outline"
               className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Voltar
+              <span>Voltar</span>
             </Button>
             <div className="flex items-center space-x-3">
               <div className="w-10 h-10 bg-retro-yellow-highlight rounded-lg flex items-center justify-center">
@@ -139,7 +140,7 @@ const LeagueCreationScreen = () => {
                   className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Criar Liga
+                  <span>Criar Liga</span>
                 </Button>
               </CardContent>
             </Card>
@@ -194,16 +195,16 @@ const LeagueCreationScreen = () => {
 
                 <div className="flex space-x-3">
                   <Button
-                    onClick={handleBack}
+                    onClick={onBack}
                     className="flex-1 bg-retro-gray-dark text-retro-white-lines hover:bg-gray-600 font-pixel"
                   >
-                    Voltar ao Menu
+                    <span>Voltar ao Menu</span>
                   </Button>
                   <Button
-                    onClick={() => dispatch({ type: 'SET_SCREEN', payload: 'dashboard' })}
+                    onClick={onLeagueCreated}
                     className="flex-1 bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
                   >
-                    Ir para o Jogo
+                    <span>Ir para o Jogo</span>
                   </Button>
                 </div>
               </CardContent>
