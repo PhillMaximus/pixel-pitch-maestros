@@ -198,6 +198,7 @@ const mockLeagues: League[] = [
     createdBy: 'admin',
     inviteCode: 'PREM2024',
     maxTeams: 20,
+    currentTeams: 0,
     currentRound: 1,
     status: 'recruiting',
     season: '2024/25'
@@ -234,6 +235,7 @@ export const gameService = {
   async createLeague(league: Omit<League, 'id'>): Promise<League> {
     return {
       id: Date.now().toString(),
+      currentTeams: 0,
       ...league
     };
   },

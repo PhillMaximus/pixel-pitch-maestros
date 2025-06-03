@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Player, Club, League, Match, MatchEvent, LeagueTable, TrainingType, PreTalkType } from '@/types/game';
 
@@ -135,7 +136,10 @@ export class SupabaseGameService {
     try {
       const { data, error } = await supabase
         .from('leagues')
-        .select('*')
+        .select(`
+          *,
+          league_participants(count)
+        `)
         .eq('status', 'recruiting');
 
       if (error) throw error;
@@ -147,6 +151,7 @@ export class SupabaseGameService {
         createdBy: league.created_by,
         inviteCode: league.invite_code,
         maxTeams: league.max_teams,
+        currentTeams: Array.isArray(league.league_participants) ? league.league_participants.length : 0,
         currentRound: league.current_round,
         nextMatchDate: league.next_match_date,
         status: league.status as 'recruiting' | 'active' | 'finished'
