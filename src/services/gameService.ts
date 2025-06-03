@@ -129,9 +129,9 @@ const mockLeagues: League[] = [
   {
     id: '1',
     name: 'Premier League',
-    created_by: 'admin',
-    max_teams: 20,
-    current_teams: 18,
+    createdBy: 'admin',
+    maxTeams: 20,
+    currentTeams: 18,
     status: 'active',
     season: '2024/25'
   }
@@ -146,6 +146,7 @@ export const gameService = {
     return {
       id: '1',
       userId,
+      email: 'joao@example.com',
       name: 'João Silva',
       level: 1,
       experience: 0,
@@ -163,10 +164,10 @@ export const gameService = {
     console.log('Lineup updated for club:', clubId);
   },
 
-  async createLeague(league: Omit<League, 'id' | 'current_teams'>): Promise<League> {
+  async createLeague(league: Omit<League, 'id' | 'currentTeams'>): Promise<League> {
     return {
       id: Date.now().toString(),
-      current_teams: 0,
+      currentTeams: 0,
       ...league
     };
   },
@@ -187,6 +188,7 @@ export const gameService = {
     return {
       id: '1',
       userId,
+      email: 'joao@example.com',
       name: 'João Silva',
       level: 1,
       experience: 0,

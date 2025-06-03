@@ -1,13 +1,15 @@
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, Trophy, Users, Calendar } from 'lucide-react';
+import { useGame } from '@/contexts/GameContext';
+import { gameService } from '@/services/gameService';
+import PixelBackground from '@/components/pixel/PixelBackground';
+import PixelCard from '@/components/pixel/PixelCard';
+import PixelButton from '@/components/pixel/PixelButton';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useGame } from '@/contexts/GameContext';
-import { ArrowLeft, Plus, Users, Trophy, Copy } from 'lucide-react';
-import { GameService } from '@/services/gameService';
-import { useToast } from '@/components/ui/use-toast';
-import { League } from '@/types/game';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface LeagueCreationScreenProps {
   onBack: () => void;
@@ -15,201 +17,195 @@ interface LeagueCreationScreenProps {
 }
 
 const LeagueCreationScreen = ({ onBack, onLeagueCreated }: LeagueCreationScreenProps) => {
-  const { state } = useGame();
-  const { toast } = useToast();
-  const [leagueName, setLeagueName] = useState('');
-  const [maxTeams, setMaxTeams] = useState(8);
-  const [createdLeague, setCreatedLeague] = useState<League | null>(null);
+  const { state, dispatch } = useGame();
+  const [formData, setFormData] = useState({
+    name: '',
+    season: '2024/25',
+    maxTeams: 8
+  });
+  const [isCreating, setIsCreating] = useState(false);
 
-  const handleCreateLeague = () => {
-    if (!leagueName.trim()) {
-      toast({
-        title: "Erro",
-        description: "Por favor, insira um nome para a liga",
-        variant: "destructive",
+  const handleCreateLeague = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!state.user) return;
+
+    setIsCreating(true);
+    try {
+      const newLeague = await gameService.createLeague({
+        name: formData.name,
+        season: formData.season,
+        maxTeams: formData.maxTeams,
+        createdBy: state.user.id,
+        status: 'recruiting'
       });
-      return;
+      
+      dispatch({ type: 'CREATE_LEAGUE', payload: newLeague });
+      onLeagueCreated();
+    } catch (error) {
+      console.error('Erro ao criar liga:', error);
+    } finally {
+      setIsCreating(false);
     }
-
-    if (!state.user) {
-      toast({
-        title: "Erro",
-        description: "Usuário não encontrado",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const newLeague = GameService.createLeague(leagueName, maxTeams, state.user.id);
-    setCreatedLeague(newLeague);
-
-    toast({
-      title: "Liga Criada!",
-      description: `Liga "${leagueName}" foi criada com sucesso`,
-    });
   };
 
-  const copyInviteCode = () => {
-    if (createdLeague) {
-      navigator.clipboard.writeText(createdLeague.inviteCode);
-      toast({
-        title: "Código Copiado!",
-        description: "Código de convite copiado para a área de transferência",
-      });
-    }
+  const handleInputChange = (field: string, value: string | number) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
   return (
-    <div className="min-h-screen bg-retro-green-field">
-      <div className="bg-retro-green-dark text-retro-white-lines border-b-4 border-retro-yellow-highlight">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+    <div className="min-h-screen relative">
+      <PixelBackground type="stadium" />
+      
+      <div className="bg-retro-green-dark/95 text-retro-white-lines border-b-4 border-retro-yellow-highlight relative z-10">
+        <div className="container mx-auto px-4 py-3">
           <div className="flex items-center space-x-4">
-            <Button
+            <PixelButton
               onClick={onBack}
-              variant="outline"
-              className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
+              variant="secondary"
+              size="sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               <span>Voltar</span>
-            </Button>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-retro-yellow-highlight rounded-lg flex items-center justify-center">
-                <Plus className="w-5 h-5 text-retro-green-dark" />
-              </div>
-              <h1 className="text-xl font-pixel font-bold">Criar Campeonato</h1>
+            </PixelButton>
+            <div>
+              <h1 className="text-xl font-pixel font-bold">Criar Liga Privada</h1>
+              <p className="text-sm text-retro-yellow-highlight">
+                Monte seu próprio campeonato
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-2xl mx-auto">
-          {!createdLeague ? (
-            <Card className="bg-retro-gray-concrete border-retro-white-lines border-2">
-              <CardHeader>
-                <CardTitle className="font-pixel text-retro-white-lines flex items-center">
-                  <Trophy className="w-6 h-6 mr-3 text-retro-yellow-highlight" />
-                  Nova Liga Privada
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <label className="block text-retro-white-lines font-pixel text-sm mb-2">
+          <div className="text-center mb-8">
+            <h2 className="text-2xl font-pixel font-bold text-retro-white-lines mb-2 drop-shadow-lg">
+              🏆 Nova Liga
+            </h2>
+            <p className="text-retro-white-lines opacity-80 font-pixel drop-shadow-md">
+              Defina as configurações do seu campeonato
+            </p>
+          </div>
+
+          <PixelCard>
+            <CardHeader>
+              <CardTitle className="font-pixel text-retro-white-lines flex items-center">
+                <Trophy className="w-6 h-6 mr-3 text-retro-yellow-highlight" />
+                Configurações da Liga
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCreateLeague} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="font-pixel text-retro-white-lines">
                     Nome da Liga
-                  </label>
+                  </Label>
                   <Input
-                    value={leagueName}
-                    onChange={(e) => setLeagueName(e.target.value)}
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="Ex: Liga dos Amigos"
-                    className="bg-retro-gray-dark border-retro-white-lines text-retro-white-lines font-pixel"
+                    required
+                    className="bg-retro-gray-concrete border-retro-white-lines text-retro-white-lines font-pixel"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-retro-white-lines font-pixel text-sm mb-2">
-                    Número Máximo de Times
-                  </label>
-                  <select
-                    value={maxTeams}
-                    onChange={(e) => setMaxTeams(Number(e.target.value))}
-                    className="w-full bg-retro-gray-dark border border-retro-white-lines text-retro-white-lines font-pixel px-3 py-2 rounded-md"
+                <div className="space-y-2">
+                  <Label htmlFor="season" className="font-pixel text-retro-white-lines">
+                    Temporada
+                  </Label>
+                  <Input
+                    id="season"
+                    value={formData.season}
+                    onChange={(e) => handleInputChange('season', e.target.value)}
+                    placeholder="Ex: 2024/25"
+                    required
+                    className="bg-retro-gray-concrete border-retro-white-lines text-retro-white-lines font-pixel"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maxTeams" className="font-pixel text-retro-white-lines">
+                    Número de Times
+                  </Label>
+                  <Select 
+                    value={formData.maxTeams.toString()} 
+                    onValueChange={(value) => handleInputChange('maxTeams', parseInt(value))}
                   >
-                    <option value={4}>4 Times</option>
-                    <option value={6}>6 Times</option>
-                    <option value={8}>8 Times</option>
-                    <option value={10}>10 Times</option>
-                    <option value={12}>12 Times</option>
-                  </select>
+                    <SelectTrigger className="bg-retro-gray-concrete border-retro-white-lines text-retro-white-lines font-pixel">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-retro-gray-concrete border-retro-white-lines">
+                      <SelectItem value="4" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">4 times</SelectItem>
+                      <SelectItem value="6" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">6 times</SelectItem>
+                      <SelectItem value="8" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">8 times</SelectItem>
+                      <SelectItem value="10" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">10 times</SelectItem>
+                      <SelectItem value="12" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">12 times</SelectItem>
+                      <SelectItem value="16" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">16 times</SelectItem>
+                      <SelectItem value="20" className="font-pixel text-retro-white-lines hover:bg-retro-green-dark">20 times</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
-                <div className="bg-retro-green-dark p-4 rounded-lg border border-retro-yellow-highlight">
-                  <h3 className="font-pixel text-retro-yellow-highlight text-sm font-bold mb-2">
-                    Informações da Liga
+                <div className="bg-retro-green-dark/30 p-4 rounded-lg border border-retro-yellow-highlight">
+                  <h3 className="font-pixel text-retro-white-lines text-sm mb-2 flex items-center">
+                    <Users className="w-4 h-4 mr-2 text-retro-yellow-highlight" />
+                    Formato do Campeonato
                   </h3>
-                  <ul className="text-retro-white-lines font-pixel text-xs space-y-1">
-                    <li>• Liga privada com código de convite</li>
-                    <li>• Partidas programadas automaticamente</li>
-                    <li>• Classificação em tempo real</li>
-                    <li>• Temporada completa (ida e volta)</li>
-                  </ul>
+                  <p className="font-pixel text-retro-white-lines text-xs opacity-80">
+                    • Todos jogam contra todos em turno e returno
+                  </p>
+                  <p className="font-pixel text-retro-white-lines text-xs opacity-80">
+                    • Simulação automática das partidas a cada dia
+                  </p>
+                  <p className="font-pixel text-retro-white-lines text-xs opacity-80">
+                    • Convide amigos com o código da liga
+                  </p>
                 </div>
 
-                <Button
-                  onClick={handleCreateLeague}
-                  disabled={!leagueName.trim()}
-                  className="w-full bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  <span>Criar Liga</span>
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card className="bg-retro-gray-concrete border-retro-white-lines border-2">
-              <CardHeader>
-                <CardTitle className="font-pixel text-retro-white-lines flex items-center">
-                  <Trophy className="w-6 h-6 mr-3 text-retro-yellow-highlight" />
-                  Liga Criada com Sucesso!
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="text-center">
-                  <div className="bg-retro-green-dark p-6 rounded-lg border border-retro-yellow-highlight">
-                    <h2 className="font-pixel text-retro-yellow-highlight text-lg font-bold mb-2">
-                      {createdLeague.name}
-                    </h2>
-                    <p className="text-retro-white-lines font-pixel text-sm mb-4">
-                      Temporada 2024 • Máximo {createdLeague.maxTeams} times
-                    </p>
-                    
-                    <div className="bg-retro-yellow-highlight p-4 rounded-md">
-                      <p className="text-retro-green-dark font-pixel text-xs font-bold mb-1">
-                        CÓDIGO DE CONVITE
-                      </p>
-                      <div className="flex items-center justify-center space-x-2">
-                        <span className="text-retro-green-dark font-pixel text-2xl font-bold">
-                          {createdLeague.inviteCode}
-                        </span>
-                        <Button
-                          onClick={copyInviteCode}
-                          size="sm"
-                          className="bg-retro-green-dark text-retro-white-lines hover:bg-retro-green-field"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-retro-blue-team p-4 rounded-lg">
-                  <h3 className="font-pixel text-retro-white-lines text-sm font-bold mb-2">
-                    Próximos Passos:
-                  </h3>
-                  <ul className="text-retro-white-lines font-pixel text-xs space-y-1">
-                    <li>1. Compartilhe o código com seus amigos</li>
-                    <li>2. Aguarde os jogadores entrarem na liga</li>
-                    <li>3. As partidas começam automaticamente</li>
-                  </ul>
-                </div>
-
-                <div className="flex space-x-3">
-                  <Button
+                <div className="flex space-x-4">
+                  <PixelButton
+                    type="button"
                     onClick={onBack}
-                    className="flex-1 bg-retro-gray-dark text-retro-white-lines hover:bg-gray-600 font-pixel"
+                    variant="secondary"
+                    className="flex-1"
                   >
-                    <span>Voltar ao Menu</span>
-                  </Button>
-                  <Button
-                    onClick={onLeagueCreated}
-                    className="flex-1 bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Cancelar
+                  </PixelButton>
+                  
+                  <PixelButton
+                    type="submit"
+                    disabled={isCreating || !formData.name.trim()}
+                    variant="success"
+                    className="flex-1"
                   >
-                    <span>Ir para o Jogo</span>
-                  </Button>
+                    {isCreating ? (
+                      '⏳ Criando...'
+                    ) : (
+                      <>
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Criar Liga
+                      </>
+                    )}
+                  </PixelButton>
                 </div>
-              </CardContent>
-            </Card>
-          )}
+              </form>
+            </CardContent>
+          </PixelCard>
+
+          <PixelCard className="mt-6" variant="highlight">
+            <CardContent className="text-center py-6">
+              <Calendar className="w-12 h-12 text-retro-yellow-highlight mx-auto mb-3" />
+              <h3 className="font-pixel text-retro-white-lines text-lg mb-2">
+                Próximos Passos
+              </h3>
+              <p className="font-pixel text-retro-white-lines text-sm opacity-80">
+                Após criar a liga, você receberá um código para compartilhar com seus amigos
+              </p>
+            </CardContent>
+          </PixelCard>
         </div>
       </div>
     </div>

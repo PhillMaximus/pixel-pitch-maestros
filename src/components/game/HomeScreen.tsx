@@ -1,3 +1,4 @@
+
 import { Trophy, Users, Plus, Search, Settings, LogOut } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +14,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
   const { state } = useGame();
 
   const handleGameEntry = () => {
-    if (state.manager?.currentClubId) {
+    if (state.manager?.current_club_id) {
       onNavigate('dashboard');
     } else {
       onNavigate('club-selection');

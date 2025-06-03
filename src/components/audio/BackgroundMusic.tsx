@@ -79,7 +79,7 @@ const BackgroundMusic = ({ className }: BackgroundMusicProps) => {
         loop
         muted={isMuted}
       >
-        <source src="https://limewire.com/d/H9HlC#Ui9SoyL7Rp" type="audio/ogg" />
+        <source src="https://raw.githubusercontent.com/PhillMaximus/phillfoot-assets/main/phillfoot_theme.ogg" type="audio/ogg" />
         <source src="/sounds/chiptune-menu.mp3" type="audio/mpeg" />
         Your browser does not support the audio element.
       </audio>
