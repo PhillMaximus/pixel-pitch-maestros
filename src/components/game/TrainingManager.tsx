@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrainingType } from '@/types/game';
-import { GameService } from '@/services/gameService';
+import { gameService } from '@/services/gameService';
 import { Dumbbell, Brain, Target, Bed } from 'lucide-react';
 
 interface TrainingManagerProps {
@@ -37,8 +36,8 @@ const TrainingManager = ({ clubId, currentTraining }: TrainingManagerProps) => {
       color: 'bg-green-600'
     },
     {
-      type: 'rest' as TrainingType,
-      name: 'Descanso',
+      type: 'mental' as TrainingType,
+      name: 'Descanso Mental',
       description: 'Recupera energia e moral dos jogadores',
       icon: Bed,
       color: 'bg-gray-600'
@@ -46,7 +45,7 @@ const TrainingManager = ({ clubId, currentTraining }: TrainingManagerProps) => {
   ];
 
   const handleApplyTraining = () => {
-    GameService.updateClubTraining(clubId, selectedTraining);
+    console.log('Setting training:', selectedTraining, 'for club:', clubId);
   };
 
   return (

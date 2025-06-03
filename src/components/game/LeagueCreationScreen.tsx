@@ -36,7 +36,10 @@ const LeagueCreationScreen = ({ onBack, onLeagueCreated }: LeagueCreationScreenP
         season: formData.season,
         maxTeams: formData.maxTeams,
         createdBy: state.user.id,
-        status: 'recruiting'
+        status: 'recruiting',
+        inviteCode: `LIGA${Date.now().toString().slice(-6)}`,
+        currentRound: 1,
+        currentTeams: 0
       });
       
       dispatch({ type: 'CREATE_LEAGUE', payload: newLeague });

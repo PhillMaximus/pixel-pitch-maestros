@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Users, Trophy, Calendar } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
@@ -36,11 +35,11 @@ const LeagueBrowserScreen = ({ onBack, onLeagueJoined }: LeagueBrowserScreenProp
   };
 
   const handleJoinLeague = async (leagueId: string) => {
-    if (!state.currentClub) return;
+    if (!state.currentClub || !state.manager) return;
     
     setJoiningLeague(leagueId);
     try {
-      await SupabaseGameService.joinLeague(leagueId, state.currentClub.id);
+      await SupabaseGameService.joinLeague(leagueId, state.currentClub.id, state.manager.id);
       dispatch({ type: 'JOIN_LEAGUE', payload: leagueId });
       onLeagueJoined();
     } catch (error) {

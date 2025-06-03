@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PreTalkType } from '@/types/game';
-import { GameService } from '@/services/gameService';
+import { gameService } from '@/services/gameService';
 import { Zap, Sword, Heart, Brain } from 'lucide-react';
 
 interface PreTalkManagerProps {
@@ -23,30 +22,30 @@ const PreTalkManager = ({ clubId, currentPreTalk }: PreTalkManagerProps) => {
       color: 'bg-yellow-600'
     },
     {
-      type: 'aggressive' as PreTalkType,
-      name: 'Agressiva',
-      description: 'Deixe o time mais combativo',
-      icon: Sword,
-      color: 'bg-red-600'
-    },
-    {
-      type: 'calm' as PreTalkType,
-      name: 'Tranquila',
-      description: 'Mantenha os jogadores calmos e focados',
-      icon: Heart,
-      color: 'bg-blue-600'
-    },
-    {
       type: 'tactical' as PreTalkType,
       name: 'Tática',
       description: 'Foque nas instruções técnicas',
       icon: Brain,
       color: 'bg-green-600'
+    },
+    {
+      type: 'pressure' as PreTalkType,
+      name: 'Pressão',
+      description: 'Deixe o time mais combativo',
+      icon: Sword,
+      color: 'bg-red-600'
+    },
+    {
+      type: 'relaxed' as PreTalkType,
+      name: 'Tranquila',
+      description: 'Mantenha os jogadores calmos e focados',
+      icon: Heart,
+      color: 'bg-blue-600'
     }
   ];
 
   const handleApplyPreTalk = () => {
-    GameService.setPreTalk(clubId, selectedPreTalk);
+    console.log('Setting pre-talk:', selectedPreTalk, 'for club:', clubId);
   };
 
   return (

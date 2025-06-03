@@ -46,6 +46,7 @@ export interface League {
   createdBy: string;
   inviteCode: string;
   maxTeams: number;
+  currentTeams: number;
   currentRound: number;
   nextMatchDate?: string;
   status: 'recruiting' | 'active' | 'finished';
