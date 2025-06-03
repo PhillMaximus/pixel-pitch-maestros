@@ -1,11 +1,10 @@
-
 import { Trophy, Users, Plus, Search, Settings, LogOut } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PixelBackground from '@/components/pixel/PixelBackground';
 import PixelCard from '@/components/pixel/PixelCard';
 import PixelButton from '@/components/pixel/PixelButton';
-import AudioPlayer from '@/components/audio/AudioPlayer';
+import BackgroundMusic from '@/components/audio/BackgroundMusic';
 
 const HomeScreen = ({ onNavigate, onLogout }: { 
   onNavigate: (screen: string) => void;
@@ -14,7 +13,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
   const { state } = useGame();
 
   const handleGameEntry = () => {
-    if (state.manager?.current_club_id) {
+    if (state.manager?.currentClubId) {
       onNavigate('dashboard');
     } else {
       onNavigate('club-selection');
@@ -40,7 +39,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
           </div>
           
           <div className="flex items-center space-x-2">
-            <AudioPlayer src="/sounds/chiptune-menu.mp3" autoPlay className="mr-4" />
+            <BackgroundMusic className="mr-4" />
             
             <PixelButton
               onClick={onLogout}

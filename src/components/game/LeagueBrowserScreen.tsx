@@ -1,12 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useGame } from '@/contexts/GameContext';
+import { supabaseGameService } from '@/services/supabaseGameService';
+import { League } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useGame } from '@/contexts/GameContext';
-import { ArrowLeft, Search, Users, Trophy, Clock, UserPlus } from 'lucide-react';
-import { GameService } from '@/services/gameService';
-import { useToast } from '@/components/ui/use-toast';
+import { ArrowLeft, Users, Trophy, Calendar } from 'lucide-react';
+import { toast } from '@/components/ui/use-toast';
+import PixelCard from '@/components/pixel/PixelCard';
+import PixelButton from '@/components/pixel/PixelButton';
+import PixelBackground from '@/components/pixel/PixelBackground';
 
 interface LeagueBrowserScreenProps {
   onBack: () => void;
@@ -14,200 +17,200 @@ interface LeagueBrowserScreenProps {
 }
 
 const LeagueBrowserScreen = ({ onBack, onLeagueJoined }: LeagueBrowserScreenProps) => {
-  const { state } = useGame();
-  const { toast } = useToast();
-  const [inviteCode, setInviteCode] = useState('');
-  const [availableLeagues] = useState(GameService.getAvailableLeagues());
+  const { state, dispatch } = useGame();
+  const [leagues, setLeagues] = useState<League[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [joiningLeague, setJoiningLeague] = useState<string | null>(null);
 
-  const handleJoinByCode = () => {
-    if (!inviteCode.trim()) {
+  useEffect(() => {
+    loadLeagues();
+  }, []);
+
+  const loadLeagues = async () => {
+    try {
+      setLoading(true);
+      const availableLeagues = await supabaseGameService.getAvailableLeagues();
+      setLeagues(availableLeagues);
+    } catch (error) {
+      console.error('Erro ao carregar ligas:', error);
       toast({
         title: "Erro",
-        description: "Por favor, insira um código de convite",
+        description: "Não foi possível carregar as ligas disponíveis",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const league = GameService.getLeagueByInviteCode(inviteCode.toUpperCase());
-    if (!league) {
-      toast({
-        title: "Liga não encontrada",
-        description: "Código de convite inválido ou liga não existe",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (league.teams.length >= league.maxTeams) {
-      toast({
-        title: "Liga lotada",
-        description: "Esta liga já atingiu o número máximo de participantes",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    onLeagueJoined();
-    toast({
-      title: "Liga encontrada!",
-      description: `Você entrou na liga "${league.name}"`,
-    });
   };
 
-  const handleJoinLeague = (leagueId: string) => {
-    const league = availableLeagues.find(l => l.id === leagueId);
-    if (!league) return;
-
-    if (league.teams.length >= league.maxTeams) {
+  const handleJoinLeague = async (leagueId: string) => {
+    if (!state.currentClub) {
       toast({
-        title: "Liga lotada",
-        description: "Esta liga já atingiu o número máximo de participantes",
+        title: "Erro",
+        description: "Você precisa ter um clube para participar de uma liga",
         variant: "destructive",
       });
       return;
     }
 
-    onLeagueJoined();
-    toast({
-      title: "Entrou na liga!",
-      description: `Você entrou na liga "${league.name}"`,
-    });
+    try {
+      setJoiningLeague(leagueId);
+      await supabaseGameService.joinLeague(leagueId, state.currentClub.id);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Você entrou na liga com sucesso!",
+      });
+      
+      onLeagueJoined();
+    } catch (error) {
+      console.error('Erro ao entrar na liga:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível entrar na liga",
+        variant: "destructive",
+      });
+    } finally {
+      setJoiningLeague(null);
+    }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen relative">
+        <PixelBackground type="stadium" />
+        <div className="min-h-screen bg-retro-green-field/95 flex items-center justify-center">
+          <div className="text-retro-white-lines font-pixel text-xl animate-pulse">
+            Carregando ligas disponíveis...
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-retro-green-field">
-      <div className="bg-retro-green-dark text-retro-white-lines border-b-4 border-retro-yellow-highlight">
+    <div className="min-h-screen relative">
+      <PixelBackground type="stadium" />
+      
+      <div className="bg-retro-green-dark/95 text-retro-white-lines border-b-4 border-retro-yellow-highlight relative z-10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button
-              onClick={onBack}
-              variant="outline"
-              className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
-            >
+            <PixelButton onClick={onBack} size="sm" variant="secondary">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              <span>Voltar</span>
-            </Button>
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-retro-yellow-highlight rounded-lg flex items-center justify-center">
-                <Search className="w-5 h-5 text-retro-green-dark" />
-              </div>
-              <h1 className="text-xl font-pixel font-bold">Buscar Ligas</h1>
+              Voltar
+            </PixelButton>
+            <div>
+              <h1 className="text-xl font-pixel font-bold">🔍 Ligas Disponíveis</h1>
+              <p className="text-sm text-retro-yellow-highlight">
+                Encontre e participe de campeonatos
+              </p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto space-y-8">
-          {/* Buscar por código */}
-          <Card className="bg-retro-gray-concrete border-retro-white-lines border-2">
-            <CardHeader>
-              <CardTitle className="font-pixel text-retro-white-lines flex items-center">
-                <UserPlus className="w-6 h-6 mr-3 text-retro-yellow-highlight" />
-                Entrar com Código de Convite
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex space-x-3">
-                <Input
-                  value={inviteCode}
-                  onChange={(e) => setInviteCode(e.target.value.toUpperCase())}
-                  placeholder="Digite o código (ex: ABC123)"
-                  className="bg-retro-gray-dark border-retro-white-lines text-retro-white-lines font-pixel"
-                  maxLength={6}
-                />
-                <Button
-                  onClick={handleJoinByCode}
-                  disabled={!inviteCode.trim()}
-                  className="bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  <span>Buscar</span>
-                </Button>
-              </div>
-              <p className="text-retro-white-lines opacity-80 font-pixel text-xs">
-                Insira o código de 6 caracteres fornecido pelo criador da liga
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Ligas disponíveis */}
-          <div>
-            <h2 className="text-xl font-pixel font-bold text-retro-white-lines mb-4">
-              Ligas Disponíveis
+      <div className="container mx-auto px-4 py-8 relative z-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-pixel font-bold text-retro-white-lines mb-2 drop-shadow-lg">
+              🏆 Campeonatos Públicos
             </h2>
-            
-            {availableLeagues.length === 0 ? (
-              <Card className="bg-retro-gray-concrete border-retro-white-lines border-2">
-                <CardContent className="py-12 text-center">
-                  <Trophy className="w-12 h-12 text-retro-yellow-highlight mx-auto mb-4 opacity-50" />
-                  <p className="text-retro-white-lines font-pixel text-lg">
-                    Nenhuma liga disponível no momento
-                  </p>
-                  <p className="text-retro-white-lines opacity-80 font-pixel text-sm mt-2">
-                    Crie uma nova liga ou peça o código para um amigo
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {availableLeagues.map((league) => (
-                  <Card 
-                    key={league.id}
-                    className="bg-retro-gray-concrete border-retro-white-lines border-2 hover:border-retro-yellow-highlight transition-colors"
-                  >
-                    <CardHeader>
-                      <CardTitle className="font-pixel text-retro-white-lines flex items-center justify-between">
-                        <div className="flex items-center">
-                          <Trophy className="w-5 h-5 mr-2 text-retro-yellow-highlight" />
-                          {league.name}
-                        </div>
-                        <span className="text-xs bg-retro-yellow-highlight text-retro-green-dark px-2 py-1 rounded">
+            <p className="text-retro-white-lines opacity-90 font-pixel drop-shadow-md">
+              Escolha uma liga para participar com seu clube
+            </p>
+          </div>
+
+          {leagues.length === 0 ? (
+            <PixelCard className="text-center">
+              <CardContent className="py-8">
+                <Trophy className="w-16 h-16 text-retro-yellow-highlight mx-auto mb-4 opacity-50" />
+                <h3 className="font-pixel text-xl text-retro-white-lines mb-2">
+                  Nenhuma liga disponível
+                </h3>
+                <p className="text-retro-white-lines opacity-80 font-pixel text-sm mb-4">
+                  Não há ligas públicas disponíveis no momento.
+                </p>
+                <PixelButton onClick={onBack} variant="primary">
+                  Voltar ao Menu
+                </PixelButton>
+              </CardContent>
+            </PixelCard>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {leagues.map((league) => (
+                <PixelCard key={league.id} className="hover:border-retro-yellow-highlight transition-all">
+                  <CardHeader>
+                    <CardTitle className="font-pixel text-retro-white-lines flex items-center">
+                      <Trophy className="w-6 h-6 mr-3 text-retro-yellow-highlight" />
+                      {league.name}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between text-sm font-pixel">
+                        <span className="text-retro-white-lines opacity-80 flex items-center">
+                          <Users className="w-4 h-4 mr-2" />
+                          Times:
+                        </span>
+                        <span className="text-retro-yellow-highlight">
+                          {league.current_teams}/{league.max_teams}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm font-pixel">
+                        <span className="text-retro-white-lines opacity-80 flex items-center">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          Temporada:
+                        </span>
+                        <span className="text-retro-yellow-highlight">
                           {league.season}
                         </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex items-center justify-between text-retro-white-lines font-pixel text-sm">
-                        <div className="flex items-center">
-                          <Users className="w-4 h-4 mr-2 text-retro-yellow-highlight" />
-                          <span>{league.teams.length}/{league.maxTeams} times</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Clock className="w-4 h-4 mr-2 text-retro-yellow-highlight" />
-                          <span>Rodada {league.currentRound}</span>
-                        </div>
                       </div>
-                      
-                      <div className="bg-retro-green-dark p-3 rounded border border-retro-yellow-highlight">
-                        <p className="text-retro-white-lines font-pixel text-xs">
-                          <strong className="text-retro-yellow-highlight">Próxima rodada:</strong><br />
-                          {formatDate(league.nextMatchDate)}
-                        </p>
+
+                      <div className="flex items-center justify-between text-sm font-pixel">
+                        <span className="text-retro-white-lines opacity-80">Status:</span>
+                        <span className={`
+                          ${league.status === 'active' ? 'text-green-400' : 
+                            league.status === 'waiting' ? 'text-yellow-400' : 'text-red-400'}
+                        `}>
+                          {league.status === 'active' ? '🟢 Ativa' : 
+                           league.status === 'waiting' ? '🟡 Aguardando' : '🔴 Finalizada'}
+                        </span>
                       </div>
-                      
-                      <Button
-                        onClick={() => handleJoinLeague(league.id)}
-                        disabled={league.teams.length >= league.maxTeams}
-                        className="w-full bg-retro-blue-team text-retro-white-lines hover:bg-blue-600 font-pixel disabled:opacity-50"
-                      >
-                        <span>{league.teams.length >= league.maxTeams ? 'Liga Lotada' : 'Entrar na Liga'}</span>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
+
+                      <div className="pt-4">
+                        <PixelButton
+                          onClick={() => handleJoinLeague(league.id)}
+                          disabled={
+                            league.current_teams >= league.max_teams || 
+                            league.status !== 'waiting' ||
+                            joiningLeague === league.id
+                          }
+                          variant={league.current_teams >= league.max_teams ? "secondary" : "success"}
+                          className="w-full"
+                        >
+                          {joiningLeague === league.id ? (
+                            '⏳ Entrando...'
+                          ) : league.current_teams >= league.max_teams ? (
+                            '❌ Liga Completa'
+                          ) : league.status !== 'waiting' ? (
+                            '🚫 Liga Fechada'
+                          ) : (
+                            '✅ Participar'
+                          )}
+                        </PixelButton>
+                      </div>
+                    </div>
+                  </CardContent>
+                </PixelCard>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-8 text-center">
+            <PixelButton onClick={loadLeagues} variant="secondary">
+              🔄 Atualizar Lista
+            </PixelButton>
           </div>
         </div>
       </div>
