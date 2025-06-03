@@ -16,6 +16,7 @@ interface ClubSelectionScreenProps {
 const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps) => {
   const [availableClubs, setAvailableClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selecting, setSelecting] = useState<string | null>(null);
 
   useEffect(() => {
     loadAvailableClubs();
@@ -29,6 +30,17 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
       console.error('Erro ao carregar clubes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSelectClub = async (clubId: string) => {
+    setSelecting(clubId);
+    try {
+      await onSelectClub(clubId);
+    } catch (error) {
+      console.error('Erro ao selecionar clube:', error);
+    } finally {
+      setSelecting(null);
     }
   };
 
@@ -134,11 +146,12 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
                   </div>
                   
                   <PixelButton
-                    onClick={() => onSelectClub(club.id)}
+                    onClick={() => handleSelectClub(club.id)}
                     variant="success"
                     className="w-full"
+                    disabled={selecting === club.id}
                   >
-                    Escolher Este Clube
+                    {selecting === club.id ? 'Selecionando...' : 'Escolher Este Clube'}
                   </PixelButton>
                 </CardContent>
               </PixelCard>

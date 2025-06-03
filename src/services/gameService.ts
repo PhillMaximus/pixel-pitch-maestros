@@ -95,31 +95,97 @@ const mockPlayers: Player[] = [
 const mockClubs: Club[] = [
   {
     id: '1',
-    name: 'Bayern Munich',
-    reputation: 95,
-    budget: 200000000,
-    league: 'Bundesliga',
-    formation: '4-3-3',
-    training: 'fitness',
+    name: 'FC Esperança',
+    reputation: 65,
+    budget: 500000,
+    league: 'Liga Regional',
+    formation: '4-4-2',
+    tactic: 'balanced',
+    training: 'physical',
     preTalkType: 'motivational',
     stadium: {
-      name: 'Allianz Arena',
-      capacity: 75000
+      name: 'Estádio da Esperança',
+      capacity: 15000
     },
-    players: mockPlayers
+    players: []
   },
   {
     id: '2',
-    name: 'Real Madrid',
-    reputation: 98,
-    budget: 300000000,
-    league: 'La Liga',
+    name: 'Atlético Cidade',
+    reputation: 70,
+    budget: 750000,
+    league: 'Liga Regional',
     formation: '4-3-3',
-    training: 'fitness',
+    tactic: 'attacking',
+    training: 'technical',
     preTalkType: 'motivational',
     stadium: {
-      name: 'Santiago Bernabéu',
-      capacity: 81044
+      name: 'Arena Cidade',
+      capacity: 20000
+    },
+    players: []
+  },
+  {
+    id: '3',
+    name: 'União FC',
+    reputation: 60,
+    budget: 400000,
+    league: 'Liga Regional',
+    formation: '3-5-2',
+    tactic: 'defensive',
+    training: 'physical',
+    preTalkType: 'pressure',
+    stadium: {
+      name: 'Estádio União',
+      capacity: 12000
+    },
+    players: []
+  },
+  {
+    id: '4',
+    name: 'Esporte Clube',
+    reputation: 68,
+    budget: 600000,
+    league: 'Liga Regional',
+    formation: '4-2-3-1',
+    tactic: 'balanced',
+    training: 'tactical',
+    preTalkType: 'tactical',
+    stadium: {
+      name: 'Arena Esporte',
+      capacity: 18000
+    },
+    players: []
+  },
+  {
+    id: '5',
+    name: 'Grêmio Local',
+    reputation: 63,
+    budget: 450000,
+    league: 'Liga Regional',
+    formation: '4-4-2',
+    tactic: 'counter-attack',
+    training: 'mental',
+    preTalkType: 'relaxed',
+    stadium: {
+      name: 'Campo do Grêmio',
+      capacity: 14000
+    },
+    players: []
+  },
+  {
+    id: '6',
+    name: 'Atlético Rural',
+    reputation: 58,
+    budget: 350000,
+    league: 'Liga Regional',
+    formation: '5-3-2',
+    tactic: 'defensive',
+    training: 'physical',
+    preTalkType: 'motivational',
+    stadium: {
+      name: 'Estádio Rural',
+      capacity: 10000
     },
     players: []
   }
@@ -130,9 +196,10 @@ const mockLeagues: League[] = [
     id: '1',
     name: 'Premier League',
     createdBy: 'admin',
+    inviteCode: 'PREM2024',
     maxTeams: 20,
-    currentTeams: 18,
-    status: 'active',
+    currentRound: 1,
+    status: 'recruiting',
     season: '2024/25'
   }
 ];
@@ -152,7 +219,7 @@ export const gameService = {
       experience: 0,
       reputation: 50,
       salary: 50000,
-      currentClubId: null
+      current_club_id: null
     };
   },
 
@@ -164,10 +231,9 @@ export const gameService = {
     console.log('Lineup updated for club:', clubId);
   },
 
-  async createLeague(league: Omit<League, 'id' | 'currentTeams'>): Promise<League> {
+  async createLeague(league: Omit<League, 'id'>): Promise<League> {
     return {
       id: Date.now().toString(),
-      currentTeams: 0,
       ...league
     };
   },
@@ -194,7 +260,7 @@ export const gameService = {
       experience: 0,
       reputation: 50,
       salary: 50000,
-      currentClubId: clubId
+      current_club_id: clubId
     };
   }
 };

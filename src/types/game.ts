@@ -34,7 +34,7 @@ export interface Club {
   };
   players: Player[];
   formation: string;
-  tactic: string;
+  tactic?: string;
   training: TrainingType;
   preTalkType: PreTalkType;
 }
@@ -58,7 +58,7 @@ export interface Manager {
   email: string;
   level: number;
   experience: number;
-  currentClubId: string | null;
+  current_club_id: string | null;
   salary: number;
   reputation: number;
 }

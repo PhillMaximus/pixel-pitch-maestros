@@ -131,6 +131,49 @@ export class SupabaseGameService {
     }
   }
 
+  static async getAvailableLeagues(): Promise<League[]> {
+    try {
+      const { data, error } = await supabase
+        .from('leagues')
+        .select('*')
+        .eq('status', 'recruiting');
+
+      if (error) throw error;
+
+      return data.map(league => ({
+        id: league.id,
+        name: league.name,
+        season: league.season,
+        createdBy: league.created_by,
+        inviteCode: league.invite_code,
+        maxTeams: league.max_teams,
+        currentRound: league.current_round,
+        nextMatchDate: league.next_match_date,
+        status: league.status as 'recruiting' | 'active' | 'finished'
+      }));
+    } catch (error) {
+      console.error('Erro ao buscar ligas:', error);
+      return [];
+    }
+  }
+
+  static async joinLeague(leagueId: string, clubId: string, managerId: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('league_participants')
+        .insert({
+          league_id: leagueId,
+          club_id: clubId,
+          manager_id: managerId
+        });
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Erro ao entrar na liga:', error);
+      throw error;
+    }
+  }
+
   static async updateClubLineup(clubId: string, lineup: string[], substitutes: string[]) {
     try {
       // Resetar todos os jogadores do clube
