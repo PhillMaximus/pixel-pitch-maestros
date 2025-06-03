@@ -10,6 +10,8 @@ export interface Player {
   salary: number;
   stamina: number;
   morale: number;
+  is_starter: boolean;
+  is_substitute: boolean;
   attributes: {
     pace: number;
     shooting: number;
@@ -33,30 +35,38 @@ export interface Club {
   players: Player[];
   formation: string;
   tactic: string;
-  lineup?: string[];
-  substitutes?: string[];
-  training?: TrainingType;
-  preTalkType?: PreTalkType;
+  training: TrainingType;
+  preTalkType: PreTalkType;
+}
+
+export interface League {
+  id: string;
+  name: string;
+  season: string;
+  createdBy: string;
+  inviteCode: string;
+  maxTeams: number;
+  currentRound: number;
+  nextMatchDate?: string;
+  status: 'recruiting' | 'active' | 'finished';
 }
 
 export interface Manager {
   id: string;
+  userId: string;
   name: string;
   email: string;
   level: number;
   experience: number;
-  currentClub: string;
+  currentClubId: string | null;
   salary: number;
   reputation: number;
-  achievements: Achievement[];
 }
 
-export interface Achievement {
+export interface User {
   id: string;
+  email: string;
   name: string;
-  description: string;
-  date: string;
-  type: 'championship' | 'cup' | 'milestone';
 }
 
 export interface Match {
@@ -65,11 +75,11 @@ export interface Match {
   awayTeam: string;
   date: string;
   status: 'scheduled' | 'live' | 'finished';
-  score?: {
+  score: {
     home: number;
     away: number;
   };
-  events?: MatchEvent[];
+  events: MatchEvent[];
   round: number;
   leagueId: string;
 }
@@ -80,20 +90,6 @@ export interface MatchEvent {
   player: string;
   team: 'home' | 'away';
   description: string;
-}
-
-export interface League {
-  id: string;
-  name: string;
-  season: string;
-  teams: Club[];
-  matches: Match[];
-  table: LeagueTable[];
-  createdBy: string;
-  inviteCode: string;
-  maxTeams: number;
-  currentRound: number;
-  nextMatchDate: string;
 }
 
 export interface LeagueTable {
@@ -109,14 +105,5 @@ export interface LeagueTable {
   points: number;
 }
 
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  manager?: Manager;
-  currentScreen: 'login' | 'home' | 'club-selection' | 'dashboard' | 'league-creation' | 'league-browser';
-}
-
-export type TrainingType = 'physical' | 'tactical' | 'technical' | 'rest';
-export type PreTalkType = 'motivational' | 'aggressive' | 'calm' | 'tactical';
-export type Formation = '4-4-2' | '4-3-3' | '3-5-2' | '5-3-2' | '4-2-3-1';
+export type TrainingType = 'physical' | 'tactical' | 'technical' | 'mental';
+export type PreTalkType = 'motivational' | 'tactical' | 'pressure' | 'relaxed';

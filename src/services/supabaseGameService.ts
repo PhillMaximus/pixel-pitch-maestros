@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Player, Club, League, Match, MatchEvent, LeagueTable, TrainingType, PreTalkType } from '@/types/game';
 
@@ -57,8 +56,8 @@ export class SupabaseGameService {
         players: players,
         formation: clubData.formation,
         tactic: clubData.tactic,
-        training: clubData.training_type as TrainingType,
-        preTalkType: clubData.pre_talk_type as PreTalkType
+        training: (clubData.training_type as TrainingType) || 'physical',
+        preTalkType: (clubData.pre_talk_type as PreTalkType) || 'motivational'
       };
 
       return club;
@@ -218,11 +217,9 @@ export class SupabaseGameService {
         throw new Error('Times não encontrados');
       }
 
-      // Calcular força dos times
       const homeStrength = this.calculateTeamStrength(homeTeam);
       const awayStrength = this.calculateTeamStrength(awayTeam);
 
-      // Simular resultado baseado na força dos times
       const result = this.generateMatchResult(homeStrength, awayStrength);
       const events = this.generateMatchEvents(result.homeScore, result.awayScore, homeTeam, awayTeam);
 
@@ -241,7 +238,6 @@ export class SupabaseGameService {
         leagueId: leagueId || 'friendly'
       };
 
-      // Se for partida de liga, salvar no banco
       if (leagueId && leagueId !== 'friendly') {
         await supabase
           .from('matches')
@@ -258,7 +254,6 @@ export class SupabaseGameService {
             events: JSON.stringify(events)
           });
 
-        // Atualizar classificação
         await this.updateLeagueStandings(leagueId, homeTeamId, awayTeamId, result.homeScore, result.awayScore);
       }
 
@@ -270,7 +265,7 @@ export class SupabaseGameService {
   }
 
   private static calculateTeamStrength(team: Club): number {
-    const starters = team.players.filter(p => p.is_starter || team.players.indexOf(p) < 11);
+    const starters = team.players.filter(p => p.is_starter);
     if (starters.length === 0) return team.reputation;
     
     const avgOverall = starters.reduce((sum, player) => sum + player.overall, 0) / starters.length;

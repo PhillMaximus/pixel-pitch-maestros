@@ -53,7 +53,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Cores retrô personalizadas
+        // Cores retrô personalizadas para Phillfoot Live Soccer
         'retro-green-field': '#4CAF50',
         'retro-green-dark': '#2E7D32',
         'retro-white-lines': '#FFFFFF',
@@ -62,6 +62,8 @@ export default {
         'retro-gray-dark': '#424242',
         'retro-blue-team': '#2196F3',
         'retro-red-team': '#F44336',
+        'retro-pixel-bg': '#1B5E20',
+        'retro-pixel-accent': '#81C784',
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -78,18 +80,46 @@ export default {
           to: { height: "0" },
         },
         "pixel-bounce": {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-10px)" },
+          "0%, 100%": { 
+            transform: "translateY(0) scale(1)",
+            filter: "brightness(1)"
+          },
+          "50%": { 
+            transform: "translateY(-8px) scale(1.05)",
+            filter: "brightness(1.2)"
+          },
+        },
+        "pixel-float": {
+          "0%, 100%": { transform: "translateY(0) rotate(0deg)" },
+          "33%": { transform: "translateY(-10px) rotate(2deg)" },
+          "66%": { transform: "translateY(-5px) rotate(-2deg)" },
+        },
+        "pixel-glow": {
+          "0%, 100%": { 
+            boxShadow: "0 0 10px rgba(255, 193, 7, 0.3)",
+            transform: "scale(1)"
+          },
+          "50%": { 
+            boxShadow: "0 0 20px rgba(255, 193, 7, 0.6), 0 0 30px rgba(255, 193, 7, 0.4)",
+            transform: "scale(1.02)"
+          },
         },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "pixel-bounce": "pixel-bounce 2s infinite",
+        "pixel-float": "pixel-float 3s ease-in-out infinite",
+        "pixel-glow": "pixel-glow 2s ease-in-out infinite",
       },
       fontFamily: {
-        'pixel': ['Courier New', 'monospace'],
+        'pixel': ['Courier New', 'Monaco', 'Menlo', 'Consolas', 'monospace'],
       },
+      boxShadow: {
+        'pixel': '4px 4px 0px 0px rgba(0,0,0,0.3)',
+        'pixel-lg': '8px 8px 0px 0px rgba(0,0,0,0.3)',
+        'pixel-glow': '0 0 20px rgba(255, 193, 7, 0.5)',
+      }
     },
   },
   plugins: [require("tailwindcss-animate")],

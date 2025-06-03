@@ -4,22 +4,74 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Football Manager Retrô - Gerencie seu clube dos sonhos!</title>
-    <meta name="description" content="Jogo de gestão de futebol online estilo retrô inspirado em Elifoot. Gerencie jogadores, táticas e conquiste títulos!" />
-    <meta name="author" content="Football Manager Retrô" />
+    <title>Phillfoot Live Soccer - Gerencie seu clube dos sonhos!</title>
+    <meta name="description" content="Phillfoot Live Soccer - Jogo de gestão de futebol online estilo retrô 8-bit. Gerencie jogadores, táticas e conquiste títulos!" />
+    <meta name="author" content="Phillfoot Live Soccer" />
 
-    <meta property="og:title" content="Football Manager Retrô" />
-    <meta property="og:description" content="Jogo de gestão de futebol online estilo retrô inspirado em Elifoot" />
+    <meta property="og:title" content="Phillfoot Live Soccer" />
+    <meta property="og:description" content="Jogo de gestão de futebol online estilo retrô 8-bit" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@lovable_dev" />
     <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <!-- Preload de fontes pixel -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Favicon personalizado -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23FFC107'><circle cx='12' cy='12' r='10'/><path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z' fill='%232E7D32'/></svg>" />
+    
+    <style>
+      /* CSS para renderização pixelada */
+      * {
+        image-rendering: -moz-crisp-edges;
+        image-rendering: -webkit-crisp-edges;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      
+      /* Loading screen personalizado */
+      .pixel-loading {
+        background: linear-gradient(45deg, #2E7D32, #4CAF50);
+        background-size: 400% 400%;
+        animation: pixelGradient 2s ease infinite;
+      }
+      
+      @keyframes pixelGradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+      
+      .loading-text {
+        font-family: 'Courier New', monospace;
+        color: #FFC107;
+        text-shadow: 2px 2px 0px #2E7D32;
+        animation: pixelPulse 1s ease-in-out infinite;
+      }
+      
+      @keyframes pixelPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.05); }
+      }
+    </style>
   </head>
 
-  <body>
-    <div id="root"></div>
+  <body class="pixel-loading">
+    <div id="root">
+      <!-- Loading screen inicial -->
+      <div class="min-h-screen flex flex-col items-center justify-center">
+        <div class="text-6xl mb-4 animate-bounce">⚽</div>
+        <h1 class="loading-text text-2xl font-bold mb-2">PHILLFOOT LIVE SOCCER</h1>
+        <p class="loading-text text-sm">Carregando o campo...</p>
+        <div class="mt-4 w-32 h-2 bg-gray-700 rounded-full overflow-hidden">
+          <div class="h-full bg-yellow-400 rounded-full animate-pulse"></div>
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

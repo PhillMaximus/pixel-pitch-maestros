@@ -2,10 +2,13 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Save } from 'lucide-react';
 import { Player } from '@/types/game';
-import { ArrowLeft, Users, Save } from 'lucide-react';
 import { SupabaseGameService } from '@/services/supabaseGameService';
 import { useToast } from '@/components/ui/use-toast';
+import PixelBackground from '@/components/pixel/PixelBackground';
+import PixelCard from '@/components/pixel/PixelCard';
+import PixelButton from '@/components/pixel/PixelButton';
 
 interface LineupScreenProps {
   clubId: string;
@@ -15,285 +18,288 @@ interface LineupScreenProps {
   onSave: () => void;
 }
 
-const FORMATION_POSITIONS = {
-  '4-4-2': { GK: 1, DEF: 4, MID: 4, ATK: 2 },
-  '4-3-3': { GK: 1, DEF: 4, MID: 3, ATK: 3 },
-  '3-5-2': { GK: 1, DEF: 3, MID: 5, ATK: 2 },
-  '5-3-2': { GK: 1, DEF: 5, MID: 3, ATK: 2 },
-  '4-2-3-1': { GK: 1, DEF: 4, MID: 5, ATK: 1 }
-};
-
 const LineupScreen = ({ clubId, players, formation, onBack, onSave }: LineupScreenProps) => {
-  const [lineup, setLineup] = useState<string[]>([]);
-  const [substitutes, setSubstitutes] = useState<string[]>([]);
-  const [availablePlayers, setAvailablePlayers] = useState<Player[]>([]);
+  const [starters, setStarters] = useState<Player[]>([]);
+  const [substitutes, setSubstitutes] = useState<Player[]>([]);
+  const [bench, setBench] = useState<Player[]>([]);
+  const [saving, setSaving] = useState(false);
   const { toast } = useToast();
 
-  const formationPositions = FORMATION_POSITIONS[formation as keyof typeof FORMATION_POSITIONS] || FORMATION_POSITIONS['4-4-2'];
-
   useEffect(() => {
-    // Filtrar jogadores com base nos flags is_starter e is_substitute
-    const starters = players.filter(p => p.is_starter);
-    const subs = players.filter(p => p.is_substitute);
-    const available = players.filter(p => !p.is_starter && !p.is_substitute);
-
-    setLineup(starters.map(p => p.id));
-    setSubstitutes(subs.map(p => p.id));
-    setAvailablePlayers(available);
+    const starterPlayers = players.filter(p => p.is_starter);
+    const substitutePlayers = players.filter(p => p.is_substitute && !p.is_starter);
+    const benchPlayers = players.filter(p => !p.is_starter && !p.is_substitute);
+    
+    setStarters(starterPlayers);
+    setSubstitutes(substitutePlayers);
+    setBench(benchPlayers);
   }, [players]);
 
-  const addToLineup = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (!player) return;
-
-    const positionCount = lineup.filter(id => {
-      const p = players.find(pl => pl.id === id);
-      return p?.position === player.position;
-    }).length;
-
-    const maxForPosition = formationPositions[player.position as keyof typeof formationPositions];
-
-    if (positionCount >= maxForPosition) {
-      toast({
-        title: "Limite da posição",
-        description: `Máximo de ${maxForPosition} jogadores na posição ${player.position}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (lineup.length >= 11) {
-      toast({
-        title: "Time completo",
-        description: "Máximo de 11 jogadores titulares",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLineup([...lineup, playerId]);
-    setAvailablePlayers(availablePlayers.filter(p => p.id !== playerId));
-    setSubstitutes(substitutes.filter(id => id !== playerId));
+  const getFormationSlots = () => {
+    const [def, mid, att] = formation.split('-').map(Number);
+    return { gk: 1, def, mid, att };
   };
 
-  const addToSubstitutes = (playerId: string) => {
+  const moveToStarters = (player: Player) => {
+    const slots = getFormationSlots();
+    const currentByPosition = starters.reduce((acc, p) => {
+      acc[p.position] = (acc[p.position] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    let canAdd = false;
+    if (player.position === 'GK' && (currentByPosition.GK || 0) < slots.gk) canAdd = true;
+    if (player.position === 'DEF' && (currentByPosition.DEF || 0) < slots.def) canAdd = true;
+    if (player.position === 'MID' && (currentByPosition.MID || 0) < slots.mid) canAdd = true;
+    if (player.position === 'ATK' && (currentByPosition.ATK || 0) < slots.att) canAdd = true;
+
+    if (!canAdd) {
+      toast({
+        title: "Formação completa",
+        description: `Não há mais vagas para a posição ${player.position} na formação ${formation}`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setStarters([...starters, player]);
+    setSubstitutes(substitutes.filter(p => p.id !== player.id));
+    setBench(bench.filter(p => p.id !== player.id));
+  };
+
+  const moveToSubstitutes = (player: Player) => {
     if (substitutes.length >= 7) {
       toast({
-        title: "Banco completo",
-        description: "Máximo de 7 jogadores reservas",
+        title: "Banco lotado",
+        description: "Máximo de 7 jogadores no banco de reservas",
         variant: "destructive",
       });
       return;
     }
 
-    setSubstitutes([...substitutes, playerId]);
-    setAvailablePlayers(availablePlayers.filter(p => p.id !== playerId));
-    setLineup(lineup.filter(id => id !== playerId));
+    setSubstitutes([...substitutes, player]);
+    setStarters(starters.filter(p => p.id !== player.id));
+    setBench(bench.filter(p => p.id !== player.id));
   };
 
-  const removeFromLineup = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setLineup(lineup.filter(id => id !== playerId));
-      setAvailablePlayers([...availablePlayers, player]);
-    }
-  };
-
-  const removeFromSubstitutes = (playerId: string) => {
-    const player = players.find(p => p.id === playerId);
-    if (player) {
-      setSubstitutes(substitutes.filter(id => id !== playerId));
-      setAvailablePlayers([...availablePlayers, player]);
-    }
+  const moveToBench = (player: Player) => {
+    setBench([...bench, player]);
+    setStarters(starters.filter(p => p.id !== player.id));
+    setSubstitutes(substitutes.filter(p => p.id !== player.id));
   };
 
   const handleSave = async () => {
-    if (lineup.length !== 11) {
+    const slots = getFormationSlots();
+    const startersByPosition = starters.reduce((acc, p) => {
+      acc[p.position] = (acc[p.position] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    if ((startersByPosition.GK || 0) !== slots.gk ||
+        (startersByPosition.DEF || 0) !== slots.def ||
+        (startersByPosition.MID || 0) !== slots.mid ||
+        (startersByPosition.ATK || 0) !== slots.att) {
       toast({
-        title: "Escalação incompleta",
-        description: "Você deve escalar exatamente 11 jogadores titulares",
+        title: "Formação incompleta",
+        description: `Complete a formação ${formation}: ${slots.gk} GK, ${slots.def} DEF, ${slots.mid} MID, ${slots.att} ATK`,
         variant: "destructive",
       });
       return;
     }
 
-    const result = await SupabaseGameService.updateClubLineup(clubId, lineup, substitutes);
-    if (result.success) {
-      toast({
-        title: "Escalação salva!",
-        description: "A escalação foi atualizada com sucesso",
-      });
-      onSave();
-    } else {
+    setSaving(true);
+    try {
+      const starterIds = starters.map(p => p.id);
+      const substituteIds = substitutes.map(p => p.id);
+      
+      const result = await SupabaseGameService.updateClubLineup(clubId, starterIds, substituteIds);
+      
+      if (result.success) {
+        toast({
+          title: "Escalação salva!",
+          description: "A escalação foi atualizada com sucesso",
+        });
+        onSave();
+      } else {
+        throw new Error("Erro ao salvar escalação");
+      }
+    } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao salvar escalação",
+        description: "Não foi possível salvar a escalação",
         variant: "destructive",
       });
+    } finally {
+      setSaving(false);
     }
   };
 
+  const PlayerCard = ({ player, onMove, buttonText, buttonVariant }: {
+    player: Player;
+    onMove: () => void;
+    buttonText: string;
+    buttonVariant: 'primary' | 'secondary' | 'danger';
+  }) => (
+    <div className="bg-retro-gray-dark p-3 rounded border border-retro-white-lines">
+      <div className="flex justify-between items-start mb-2">
+        <div>
+          <p className="font-pixel text-retro-white-lines text-sm font-bold">{player.name}</p>
+          <p className="font-pixel text-retro-yellow-highlight text-xs">{player.position} • {player.age} anos</p>
+        </div>
+        <div className="text-right">
+          <p className="font-pixel text-retro-white-lines text-xs">OVR: {player.overall}</p>
+          <p className="font-pixel text-retro-yellow-highlight text-xs">POT: {player.potential}</p>
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-3 gap-1 mb-2 text-xs font-pixel text-retro-white-lines">
+        <div>PAC: {player.attributes.pace}</div>
+        <div>SHO: {player.attributes.shooting}</div>
+        <div>PAS: {player.attributes.passing}</div>
+        <div>DEF: {player.attributes.defending}</div>
+        <div>DRI: {player.attributes.dribbling}</div>
+        <div>PHY: {player.attributes.physical}</div>
+      </div>
+      
+      <PixelButton
+        onClick={onMove}
+        variant={buttonVariant}
+        size="sm"
+        className="w-full"
+      >
+        {buttonText}
+      </PixelButton>
+    </div>
+  );
+
   return (
-    <div className="min-h-screen bg-retro-green-field">
-      <div className="bg-retro-green-dark text-retro-white-lines border-b-4 border-retro-yellow-highlight">
+    <div className="min-h-screen relative">
+      <PixelBackground type="field" />
+      
+      <div className="bg-retro-green-dark/95 text-retro-white-lines border-b-4 border-retro-yellow-highlight relative z-10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button
-              onClick={onBack}
-              variant="outline"
-              className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
-            >
+            <PixelButton onClick={onBack} variant="secondary" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              <span>Voltar</span>
-            </Button>
-            <h1 className="text-xl font-pixel font-bold">Escalação - {formation}</h1>
+              Voltar
+            </PixelButton>
+            <h1 className="text-xl font-pixel font-bold">⚽ Escalação ({formation})</h1>
           </div>
           
-          <Button
+          <PixelButton
             onClick={handleSave}
-            className="bg-retro-yellow-highlight text-retro-green-dark hover:bg-yellow-300 font-pixel"
+            variant="primary"
+            disabled={saving}
           >
             <Save className="w-4 h-4 mr-2" />
-            <span>Salvar Escalação</span>
-          </Button>
+            {saving ? 'Salvando...' : 'Salvar'}
+          </PixelButton>
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-6">
+      <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Titulares */}
-          <Card className="bg-retro-gray-concrete border-retro-white-lines">
+          <PixelCard>
             <CardHeader>
               <CardTitle className="font-pixel text-retro-white-lines flex items-center">
-                <Users className="w-5 h-5 mr-2 text-retro-yellow-highlight" />
-                Titulares ({lineup.length}/11)
+                🟢 Titulares ({starters.length}/11)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {Object.entries(formationPositions).map(([position, maxCount]) => {
-                const positionPlayers = lineup.map(id => players.find(p => p.id === id))
-                  .filter(p => p?.position === position);
-                
-                return (
-                  <div key={position} className="bg-retro-green-dark p-3 rounded">
-                    <h4 className="font-pixel text-retro-yellow-highlight text-sm mb-2">
-                      {position} ({positionPlayers.length}/{maxCount})
-                    </h4>
-                    <div className="space-y-1">
-                      {positionPlayers.map(player => player && (
-                        <div
-                          key={player.id}
-                          className="flex items-center justify-between bg-retro-gray-concrete p-2 rounded"
-                        >
-                          <span className="font-pixel text-retro-white-lines text-xs">
-                            {player.name} ({player.overall})
-                          </span>
-                          <Button
-                            onClick={() => removeFromLineup(player.id)}
-                            size="sm"
-                            variant="outline"
-                            className="border-retro-red text-retro-red hover:bg-retro-red hover:text-white text-xs px-2 py-1"
-                          >
-                            X
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+            <CardContent>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {starters.map(player => (
+                  <PlayerCard
+                    key={player.id}
+                    player={player}
+                    onMove={() => moveToBench(player)}
+                    buttonText="Remover"
+                    buttonVariant="danger"
+                  />
+                ))}
+              </div>
             </CardContent>
-          </Card>
+          </PixelCard>
 
           {/* Reservas */}
-          <Card className="bg-retro-gray-concrete border-retro-white-lines">
+          <PixelCard>
             <CardHeader>
-              <CardTitle className="font-pixel text-retro-white-lines">
-                Reservas ({substitutes.length}/7)
+              <CardTitle className="font-pixel text-retro-white-lines flex items-center">
+                🟡 Banco ({substitutes.length}/7)
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {substitutes.map(playerId => {
-                const player = players.find(p => p.id === playerId);
-                return player && (
-                  <div
+            <CardContent>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {substitutes.map(player => (
+                  <PlayerCard
                     key={player.id}
-                    className="flex items-center justify-between bg-retro-green-dark p-2 rounded"
-                  >
-                    <span className="font-pixel text-retro-white-lines text-xs">
-                      {player.name} ({player.overall}) - {player.position}
-                    </span>
-                    <div className="flex space-x-1">
-                      <Button
-                        onClick={() => addToLineup(player.id)}
-                        size="sm"
-                        className="bg-retro-yellow-highlight text-retro-green-dark text-xs px-2 py-1"
-                      >
-                        Titular
-                      </Button>
-                      <Button
-                        onClick={() => removeFromSubstitutes(player.id)}
-                        size="sm"
-                        variant="outline"
-                        className="border-retro-red text-retro-red hover:bg-retro-red hover:text-white text-xs px-2 py-1"
-                      >
-                        X
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
+                    player={player}
+                    onMove={() => moveToStarters(player)}
+                    buttonText="Titular"
+                    buttonVariant="primary"
+                  />
+                ))}
+              </div>
             </CardContent>
-          </Card>
+          </PixelCard>
 
-          {/* Jogadores Disponíveis */}
-          <Card className="bg-retro-gray-concrete border-retro-white-lines">
+          {/* Elenco */}
+          <PixelCard>
             <CardHeader>
-              <CardTitle className="font-pixel text-retro-white-lines">
-                Disponíveis ({availablePlayers.length})
+              <CardTitle className="font-pixel text-retro-white-lines flex items-center">
+                ⚪ Elenco ({bench.length})
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {['GK', 'DEF', 'MID', 'ATK'].map(position => {
-                const positionPlayers = availablePlayers.filter(p => p.position === position);
-                if (positionPlayers.length === 0) return null;
-                
-                return (
-                  <div key={position} className="space-y-1">
-                    <h4 className="font-pixel text-retro-yellow-highlight text-sm">
-                      {position}
-                    </h4>
-                    {positionPlayers.map(player => (
-                      <div
-                        key={player.id}
-                        className="flex items-center justify-between bg-retro-green-dark p-2 rounded"
-                      >
-                        <span className="font-pixel text-retro-white-lines text-xs">
-                          {player.name} ({player.overall})
-                        </span>
-                        <div className="flex space-x-1">
-                          <Button
-                            onClick={() => addToLineup(player.id)}
-                            size="sm"
-                            className="bg-retro-yellow-highlight text-retro-green-dark text-xs px-2 py-1"
-                          >
-                            Titular
-                          </Button>
-                          <Button
-                            onClick={() => addToSubstitutes(player.id)}
-                            size="sm"
-                            className="bg-retro-blue-team text-retro-white-lines text-xs px-2 py-1"
-                          >
-                            Reserva
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+            <CardContent>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {bench.map(player => (
+                  <div key={player.id} className="space-y-2">
+                    <PlayerCard
+                      player={player}
+                      onMove={() => moveToStarters(player)}
+                      buttonText="➡️ Titular"
+                      buttonVariant="primary"
+                    />
+                    <PixelButton
+                      onClick={() => moveToSubstitutes(player)}
+                      variant="secondary"
+                      size="sm"
+                      className="w-full"
+                    >
+                      ➡️ Banco
+                    </PixelButton>
                   </div>
-                );
-              })}
+                ))}
+              </div>
             </CardContent>
-          </Card>
+          </PixelCard>
+        </div>
+
+        {/* Resumo da formação */}
+        <div className="mt-6">
+          <PixelCard variant="highlight">
+            <CardContent className="text-center">
+              <h3 className="font-pixel text-lg font-bold mb-2">📋 Resumo da Formação {formation}</h3>
+              <div className="grid grid-cols-4 gap-4">
+                {['GK', 'DEF', 'MID', 'ATK'].map(position => {
+                  const count = starters.filter(p => p.position === position).length;
+                  const slots = getFormationSlots();
+                  const required = position === 'GK' ? slots.gk : 
+                                 position === 'DEF' ? slots.def :
+                                 position === 'MID' ? slots.mid : slots.att;
+                  
+                  return (
+                    <div key={position} className="text-center">
+                      <p className="font-pixel text-sm">{position}</p>
+                      <p className={`font-pixel text-lg font-bold ${count === required ? 'text-green-600' : 'text-red-600'}`}>
+                        {count}/{required}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </PixelCard>
         </div>
       </div>
     </div>
