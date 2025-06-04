@@ -5,9 +5,11 @@ import PixelButton from '@/components/pixel/PixelButton';
 
 interface BackgroundMusicProps {
   className?: string;
+  volume?: number; // 0.0 to 1.0
+  autoPlay?: boolean;
 }
 
-const BackgroundMusic = ({ className }: BackgroundMusicProps) => {
+const BackgroundMusic = ({ className, volume = 0.3, autoPlay = true }: BackgroundMusicProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -17,37 +19,73 @@ const BackgroundMusic = ({ className }: BackgroundMusicProps) => {
     const audio = audioRef.current;
     if (!audio) return;
 
+    // Set initial volume
+    audio.volume = volume;
+
     const handleCanPlayThrough = () => {
       setIsLoaded(true);
-      // Try to autoplay when loaded
-      audio.play().then(() => {
-        setIsPlaying(true);
-      }).catch(() => {
-        // Autoplay blocked by browser, user needs to interact first
-        setIsPlaying(false);
-      });
+      console.log('Audio loaded, attempting autoplay');
+      
+      if (autoPlay) {
+        // Try to autoplay when loaded
+        const playPromise = audio.play();
+        
+        if (playPromise !== undefined) {
+          playPromise.then(() => {
+            console.log('Audio autoplay started successfully');
+            setIsPlaying(true);
+          }).catch((error) => {
+            console.log('Autoplay blocked by browser:', error);
+            setIsPlaying(false);
+          });
+        }
+      }
     };
 
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+    const handlePlay = () => {
+      console.log('Audio started playing');
+      setIsPlaying(true);
+    };
+    
+    const handlePause = () => {
+      console.log('Audio paused');
+      setIsPlaying(false);
+    };
+    
     const handleEnded = () => {
+      console.log('Audio ended, looping');
       // Loop the music
       audio.currentTime = 0;
       audio.play();
+    };
+
+    const handleError = (e) => {
+      console.error('Audio error:', e);
+      setIsLoaded(false);
     };
 
     audio.addEventListener('canplaythrough', handleCanPlayThrough);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
     audio.addEventListener('ended', handleEnded);
+    audio.addEventListener('error', handleError);
 
     return () => {
       audio.removeEventListener('canplaythrough', handleCanPlayThrough);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
       audio.removeEventListener('ended', handleEnded);
+      audio.removeEventListener('error', handleError);
     };
-  }, []);
+  }, [autoPlay, volume]);
+
+  // Update volume when prop changes
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (audio && !isMuted) {
+      audio.volume = volume;
+    }
+  }, [volume, isMuted]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -56,10 +94,13 @@ const BackgroundMusic = ({ className }: BackgroundMusicProps) => {
     if (isPlaying) {
       audio.pause();
     } else {
-      audio.play().catch((error) => {
-        console.log('Error playing audio:', error);
-        setIsPlaying(false);
-      });
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((error) => {
+          console.log('Error playing audio:', error);
+          setIsPlaying(false);
+        });
+      }
     }
   };
 

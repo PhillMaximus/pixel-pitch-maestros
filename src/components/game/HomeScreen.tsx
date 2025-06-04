@@ -1,4 +1,3 @@
-
 import { Trophy, Users, Plus, Search, Settings, LogOut } from 'lucide-react';
 import { useGame } from '@/contexts/GameContext';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,7 +39,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
           </div>
           
           <div className="flex items-center space-x-2">
-            <BackgroundMusic className="mr-4" />
+            <BackgroundMusic className="mr-4" volume={0.5} autoPlay={true} />
             
             <PixelButton
               onClick={onLogout}

@@ -2,10 +2,11 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Trophy, Users, DollarSign } from 'lucide-react';
 import { Club } from '@/types/game';
-import { SupabaseGameService } from '@/services/supabaseGameService';
+import { gameService } from '@/services/gameService';
 import PixelBackground from '@/components/pixel/PixelBackground';
 import PixelCard from '@/components/pixel/PixelCard';
 import PixelButton from '@/components/pixel/PixelButton';
+import BackgroundMusic from '@/components/audio/BackgroundMusic';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,7 +27,9 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
 
   const loadAvailableClubs = async () => {
     try {
-      const clubs = await SupabaseGameService.getAvailableClubs();
+      console.log('Loading available clubs...');
+      const clubs = await gameService.getAvailableClubs();
+      console.log('Clubs loaded:', clubs);
       setAvailableClubs(clubs);
     } catch (error) {
       console.error('Erro ao carregar clubes:', error);
@@ -41,18 +44,16 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
   };
 
   const handleSelectClub = async (clubId: string) => {
+    console.log('Selecting club:', clubId);
     setSelecting(clubId);
+    
     try {
-      // Para simular a seleção do clube (usando userId fictício)
-      const userId = 'user-123'; // Em uma aplicação real, isso viria do contexto de autenticação
-      await SupabaseGameService.selectClub(userId, clubId);
-      
       toast({
         title: "Sucesso!",
         description: "Clube selecionado com sucesso",
-        variant: "default"
       });
 
+      // Call the parent callback
       onSelectClub(clubId);
     } catch (error) {
       console.error('Erro ao selecionar clube:', error);
@@ -82,21 +83,25 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
       
       <div className="bg-retro-green-dark/95 text-retro-white-lines border-b-4 border-retro-yellow-highlight relative z-10">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center space-x-4">
-            <PixelButton
-              onClick={onBack}
-              variant="secondary"
-              size="sm"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              <span>Voltar</span>
-            </PixelButton>
-            <div>
-              <h1 className="text-xl font-pixel font-bold">Escolha seu Clube</h1>
-              <p className="text-sm text-retro-yellow-highlight">
-                Comece sua carreira como treinador
-              </p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <PixelButton
+                onClick={onBack}
+                variant="secondary"
+                size="sm"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                <span>Voltar</span>
+              </PixelButton>
+              <div>
+                <h1 className="text-xl font-pixel font-bold">Escolha seu Clube</h1>
+                <p className="text-sm text-retro-yellow-highlight">
+                  Comece sua carreira como treinador
+                </p>
+              </div>
             </div>
+            
+            <BackgroundMusic className="mr-4" volume={0.2} autoPlay={true} />
           </div>
         </div>
       </div>
@@ -116,7 +121,7 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
             {availableClubs.map((club) => (
               <PixelCard 
                 key={club.id} 
-                className={`hover:border-retro-yellow-highlight transition-colors border-2`}
+                className="hover:border-retro-yellow-highlight transition-colors border-2"
                 style={{ borderColor: club.primaryColor || '#4CAF50' }}
               >
                 <CardHeader 

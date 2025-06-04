@@ -22,7 +22,7 @@ const GameApp = () => {
     return (
       <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
         <div className="text-retro-white-lines font-pixel text-xl animate-pulse">
-          Carregando Football Manager Retrô...
+          Carregando Phillfoot Live Soccer...
         </div>
       </div>
     );
@@ -33,6 +33,7 @@ const GameApp = () => {
     return (
       <AuthScreen 
         onAuthSuccess={(user, hasManager) => {
+          console.log('Auth success:', user, hasManager);
           if (hasManager) {
             setCurrentScreen('home');
           } else {
@@ -49,8 +50,14 @@ const GameApp = () => {
       <ClubSelectionScreen 
         onBack={() => setCurrentScreen('home')}
         onSelectClub={async (clubId) => {
-          await selectClub(clubId);
-          setCurrentScreen('dashboard');
+          console.log('Club selected in Index:', clubId);
+          try {
+            await selectClub(clubId);
+            setCurrentScreen('dashboard');
+          } catch (error) {
+            console.error('Error selecting club in Index:', error);
+            // Stay on club selection screen if there's an error
+          }
         }}
       />
     );
@@ -62,6 +69,7 @@ const GameApp = () => {
       return (
         <HomeScreen 
           onNavigate={(screen) => {
+            console.log('Navigating to:', screen);
             if (screen === 'dashboard') {
               setCurrentScreen('dashboard');
             } else if (screen === 'league-creation') {
@@ -71,6 +79,7 @@ const GameApp = () => {
             }
           }}
           onLogout={() => {
+            console.log('Logging out');
             dispatch({ type: 'LOGOUT' });
             setCurrentScreen('auth');
           }}
@@ -134,8 +143,13 @@ const GameApp = () => {
         <ClubSelectionScreen 
           onBack={() => setCurrentScreen('home')}
           onSelectClub={async (clubId) => {
-            await selectClub(clubId);
-            setCurrentScreen('dashboard');
+            console.log('Club selected in switch:', clubId);
+            try {
+              await selectClub(clubId);
+              setCurrentScreen('dashboard');
+            } catch (error) {
+              console.error('Error selecting club in switch:', error);
+            }
           }}
         />
       );
