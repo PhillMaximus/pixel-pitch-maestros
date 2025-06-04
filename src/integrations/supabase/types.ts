@@ -51,12 +51,15 @@ export type Database = {
         Row: {
           budget: number
           created_at: string
+          emblem: string | null
           formation: string | null
           id: string
           league: string
           name: string
           pre_talk_type: string | null
+          primary_color: string | null
           reputation: number
+          secondary_color: string | null
           stadium_capacity: number
           stadium_name: string
           tactic: string | null
@@ -66,12 +69,15 @@ export type Database = {
         Insert: {
           budget: number
           created_at?: string
+          emblem?: string | null
           formation?: string | null
           id: string
           league: string
           name: string
           pre_talk_type?: string | null
+          primary_color?: string | null
           reputation: number
+          secondary_color?: string | null
           stadium_capacity: number
           stadium_name: string
           tactic?: string | null
@@ -81,12 +87,15 @@ export type Database = {
         Update: {
           budget?: number
           created_at?: string
+          emblem?: string | null
           formation?: string | null
           id?: string
           league?: string
           name?: string
           pre_talk_type?: string | null
+          primary_color?: string | null
           reputation?: number
+          secondary_color?: string | null
           stadium_capacity?: number
           stadium_name?: string
           tactic?: string | null

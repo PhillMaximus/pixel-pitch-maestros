@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Player, Club, League, Match, MatchEvent, LeagueTable, TrainingType, PreTalkType } from '@/types/game';
 
@@ -58,7 +57,10 @@ export class SupabaseGameService {
         formation: clubData.formation,
         tactic: clubData.tactic,
         training: (clubData.training_type as TrainingType) || 'physical',
-        preTalkType: (clubData.pre_talk_type as PreTalkType) || 'motivational'
+        preTalkType: (clubData.pre_talk_type as PreTalkType) || 'motivational',
+        primaryColor: clubData.primary_color,
+        secondaryColor: clubData.secondary_color,
+        emblem: clubData.emblem
       };
 
       return club;
@@ -121,7 +123,10 @@ export class SupabaseGameService {
           formation: clubData.formation,
           tactic: clubData.tactic,
           training: clubData.training_type as TrainingType,
-          preTalkType: clubData.pre_talk_type as PreTalkType
+          preTalkType: clubData.pre_talk_type as PreTalkType,
+          primaryColor: clubData.primary_color,
+          secondaryColor: clubData.secondary_color,
+          emblem: clubData.emblem
         });
       }
 
@@ -252,6 +257,42 @@ export class SupabaseGameService {
     } catch (error) {
       console.error('Erro ao atualizar preleção:', error);
       return { success: false, error };
+    }
+  }
+
+  static async selectClub(userId: string, clubId: string): Promise<void> {
+    try {
+      // Primeiro buscar ou criar o manager
+      const { data: existingManager } = await supabase
+        .from('managers')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (existingManager) {
+        // Atualizar o clube atual do manager
+        const { error } = await supabase
+          .from('managers')
+          .update({ current_club_id: clubId })
+          .eq('user_id', userId);
+
+        if (error) throw error;
+      } else {
+        // Criar novo manager se não existir
+        const { error } = await supabase
+          .from('managers')
+          .insert({
+            user_id: userId,
+            name: 'Manager',
+            email: 'manager@example.com',
+            current_club_id: clubId
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Erro ao selecionar clube:', error);
+      throw error;
     }
   }
 

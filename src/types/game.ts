@@ -1,4 +1,3 @@
-
 export interface Player {
   id: string;
   name: string;
@@ -37,6 +36,9 @@ export interface Club {
   tactic?: string;
   training: TrainingType;
   preTalkType: PreTalkType;
+  primaryColor?: string;
+  secondaryColor?: string;
+  emblem?: string;
 }
 
 export interface League {

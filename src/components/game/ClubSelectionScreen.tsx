@@ -7,6 +7,7 @@ import PixelBackground from '@/components/pixel/PixelBackground';
 import PixelCard from '@/components/pixel/PixelCard';
 import PixelButton from '@/components/pixel/PixelButton';
 import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 
 interface ClubSelectionScreenProps {
   onBack: () => void;
@@ -17,6 +18,7 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
   const [availableClubs, setAvailableClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
   const [selecting, setSelecting] = useState<string | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     loadAvailableClubs();
@@ -28,6 +30,11 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
       setAvailableClubs(clubs);
     } catch (error) {
       console.error('Erro ao carregar clubes:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar clubes disponíveis",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -36,9 +43,24 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
   const handleSelectClub = async (clubId: string) => {
     setSelecting(clubId);
     try {
-      await onSelectClub(clubId);
+      // Para simular a seleção do clube (usando userId fictício)
+      const userId = 'user-123'; // Em uma aplicação real, isso viria do contexto de autenticação
+      await SupabaseGameService.selectClub(userId, clubId);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Clube selecionado com sucesso",
+        variant: "default"
+      });
+
+      onSelectClub(clubId);
     } catch (error) {
       console.error('Erro ao selecionar clube:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao selecionar clube. Tente novamente.",
+        variant: "destructive"
+      });
     } finally {
       setSelecting(null);
     }
@@ -94,10 +116,20 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
             {availableClubs.map((club) => (
               <PixelCard 
                 key={club.id} 
-                className="hover:border-retro-yellow-highlight transition-colors"
+                className={`hover:border-retro-yellow-highlight transition-colors border-2`}
+                style={{ borderColor: club.primaryColor || '#4CAF50' }}
               >
-                <CardHeader>
-                  <CardTitle className="font-pixel text-retro-white-lines text-center">
+                <CardHeader 
+                  className="text-center"
+                  style={{ 
+                    backgroundColor: club.primaryColor || '#4CAF50',
+                    color: club.secondaryColor || '#FFFFFF'
+                  }}
+                >
+                  <div className="flex items-center justify-center mb-2">
+                    <span className="text-3xl mr-2">{club.emblem || '⚽'}</span>
+                  </div>
+                  <CardTitle className="font-pixel">
                     {club.name}
                   </CardTitle>
                 </CardHeader>
@@ -128,7 +160,10 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
                     </div>
                     
                     <div className="flex items-center">
-                      <div className="w-4 h-4 bg-retro-green-field rounded mr-2"></div>
+                      <div 
+                        className="w-4 h-4 rounded mr-2"
+                        style={{ backgroundColor: club.primaryColor || '#4CAF50' }}
+                      ></div>
                       <div>
                         <p className="text-retro-white-lines opacity-80 font-pixel text-xs">Estádio</p>
                         <p className="font-pixel text-retro-white-lines">{(club.stadium.capacity / 1000).toFixed(0)}k</p>
@@ -150,6 +185,10 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
                     variant="success"
                     className="w-full"
                     disabled={selecting === club.id}
+                    style={{
+                      backgroundColor: club.primaryColor || '#4CAF50',
+                      color: club.secondaryColor || '#FFFFFF'
+                    }}
                   >
                     {selecting === club.id ? 'Selecionando...' : 'Escolher Este Clube'}
                   </PixelButton>
