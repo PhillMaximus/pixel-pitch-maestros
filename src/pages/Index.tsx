@@ -53,11 +53,16 @@ const GameApp = () => {
           console.log('Club selected in Index:', clubId);
           try {
             await selectClub(clubId);
+            // Força navegação para dashboard após seleção bem-sucedida
             setCurrentScreen('dashboard');
           } catch (error) {
             console.error('Error selecting club in Index:', error);
             // Stay on club selection screen if there's an error
           }
+        }}
+        onLogout={() => {
+          dispatch({ type: 'LOGOUT' });
+          setCurrentScreen('auth');
         }}
       />
     );
@@ -76,6 +81,8 @@ const GameApp = () => {
               setCurrentScreen('league-creation');
             } else if (screen === 'league-browser') {
               setCurrentScreen('league-browser');
+            } else if (screen === 'club-selection') {
+              setCurrentScreen('club-selection');
             }
           }}
           onLogout={() => {
@@ -96,6 +103,10 @@ const GameApp = () => {
             setCurrentScreen('standings');
           }}
           onRefreshClub={refreshClub}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
         />
       );
 
@@ -110,6 +121,10 @@ const GameApp = () => {
             refreshClub();
             setCurrentScreen('dashboard');
           }}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
         />
       ) : null;
 
@@ -119,6 +134,10 @@ const GameApp = () => {
           leagueId={selectedLeague.id}
           leagueName={selectedLeague.name}
           onBack={() => setCurrentScreen('dashboard')}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
         />
       ) : null;
 
@@ -127,6 +146,10 @@ const GameApp = () => {
         <LeagueCreationScreen 
           onBack={() => setCurrentScreen('home')}
           onLeagueCreated={() => setCurrentScreen('home')}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
         />
       );
 
@@ -135,6 +158,10 @@ const GameApp = () => {
         <LeagueBrowserScreen 
           onBack={() => setCurrentScreen('home')}
           onLeagueJoined={() => setCurrentScreen('home')}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
+          }}
         />
       );
 
@@ -150,6 +177,10 @@ const GameApp = () => {
             } catch (error) {
               console.error('Error selecting club in switch:', error);
             }
+          }}
+          onLogout={() => {
+            dispatch({ type: 'LOGOUT' });
+            setCurrentScreen('auth');
           }}
         />
       );
