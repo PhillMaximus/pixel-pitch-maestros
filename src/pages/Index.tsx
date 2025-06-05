@@ -34,18 +34,48 @@ const GameApp = () => {
       <AuthScreen 
         onAuthSuccess={(user, hasManager) => {
           console.log('Auth success:', user, hasManager);
-          if (hasManager) {
-            setCurrentScreen('home');
-          } else {
+          if (hasManager && state.manager?.current_club_id) {
+            // Usuário tem manager e clube - ir direto para dashboard
+            setCurrentScreen('dashboard');
+          } else if (hasManager) {
+            // Usuário tem manager mas não tem clube - ir para seleção
             setCurrentScreen('club-selection');
+          } else {
+            // Usuário não tem manager - ir para home
+            setCurrentScreen('home');
           }
         }}
       />
     );
   }
 
-  // Logado mas sem manager ou clube - mostrar seleção de clube
-  if (!state.hasManager || !state.manager?.current_club_id) {
+  // Logado mas sem manager - mostrar home
+  if (!state.hasManager || !state.manager) {
+    return (
+      <HomeScreen 
+        onNavigate={(screen) => {
+          console.log('Navigating to:', screen);
+          if (screen === 'dashboard') {
+            setCurrentScreen('dashboard');
+          } else if (screen === 'league-creation') {
+            setCurrentScreen('league-creation');
+          } else if (screen === 'league-browser') {
+            setCurrentScreen('league-browser');
+          } else if (screen === 'club-selection') {
+            setCurrentScreen('club-selection');
+          }
+        }}
+        onLogout={() => {
+          console.log('Logging out');
+          dispatch({ type: 'LOGOUT' });
+          setCurrentScreen('auth');
+        }}
+      />
+    );
+  }
+
+  // Tem manager mas não tem clube - mostrar seleção de clube
+  if (!state.manager.current_club_id || !state.currentClub) {
     return (
       <ClubSelectionScreen 
         onBack={() => setCurrentScreen('home')}
@@ -53,11 +83,10 @@ const GameApp = () => {
           console.log('Club selected in Index:', clubId);
           try {
             await selectClub(clubId);
-            // Força navegação para dashboard após seleção bem-sucedida
+            // Após seleção bem-sucedida, ir para dashboard
             setCurrentScreen('dashboard');
           } catch (error) {
             console.error('Error selecting club in Index:', error);
-            // Stay on club selection screen if there's an error
           }
         }}
         onLogout={() => {
@@ -68,7 +97,7 @@ const GameApp = () => {
     );
   }
 
-  // Navegação baseada na tela atual
+  // Navegação baseada na tela atual quando tudo está configurado
   switch (currentScreen) {
     case 'home':
       return (
@@ -166,13 +195,16 @@ const GameApp = () => {
       );
 
     default:
+      // Se tem manager e clube, mostrar dashboard por padrão
       return (
-        <HomeScreen 
-          onNavigate={(screen) => setCurrentScreen(screen as Screen)}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
+        <Dashboard 
+          onBack={() => setCurrentScreen('home')}
+          onNavigateToLineup={() => setCurrentScreen('lineup')}
+          onNavigateToStandings={(leagueId, leagueName) => {
+            setSelectedLeague({ id: leagueId, name: leagueName });
+            setCurrentScreen('standings');
           }}
+          onRefreshClub={refreshClub}
         />
       );
   }
