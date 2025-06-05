@@ -23,6 +23,11 @@ export interface Manager {
 export class AuthService {
   static async signUp(email: string, password: string, name: string) {
     try {
+      // Use o domínio público correto ao invés de localhost
+      const redirectUrl = window.location.origin.includes('localhost') 
+        ? `${window.location.origin}/`
+        : `${window.location.origin}/`;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -30,7 +35,7 @@ export class AuthService {
           data: {
             name: name
           },
-          emailRedirectTo: `${window.location.origin}/`
+          emailRedirectTo: redirectUrl
         }
       });
 

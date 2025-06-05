@@ -5,6 +5,8 @@ import PixelBackground from '@/components/pixel/PixelBackground';
 import PixelCard from '@/components/pixel/PixelCard';
 import PixelButton from '@/components/pixel/PixelButton';
 import BackgroundMusic from '@/components/audio/BackgroundMusic';
+import SoccerFieldSprite from '@/components/retro/SoccerFieldSprite';
+import PlayerSprite from '@/components/retro/PlayerSprite';
 
 const HomeScreen = ({ onNavigate, onLogout }: { 
   onNavigate: (screen: string) => void;
@@ -24,6 +26,22 @@ const HomeScreen = ({ onNavigate, onLogout }: {
     <div className="min-h-screen relative">
       <PixelBackground type="stadium" />
       
+      {/* Campo de futebol decorativo */}
+      <div className="absolute top-20 left-10 opacity-20">
+        <SoccerFieldSprite size="large" />
+      </div>
+      <div className="absolute bottom-20 right-10 opacity-20">
+        <SoccerFieldSprite size="medium" />
+      </div>
+      
+      {/* Jogadores decorativos */}
+      <div className="absolute top-40 right-20 opacity-30">
+        <PlayerSprite position="ATK" teamColor="#FF6B35" />
+      </div>
+      <div className="absolute bottom-40 left-20 opacity-30">
+        <PlayerSprite position="GK" teamColor="#4ECDC4" />
+      </div>
+      
       <div className="bg-retro-green-dark/95 text-retro-white-lines border-b-4 border-retro-yellow-highlight relative z-10">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -39,7 +57,7 @@ const HomeScreen = ({ onNavigate, onLogout }: {
           </div>
           
           <div className="flex items-center space-x-2">
-            <BackgroundMusic className="mr-4" volume={0.5} autoPlay={true} />
+            <BackgroundMusic className="mr-4" volume={0.3} autoPlay={true} />
             
             <PixelButton
               onClick={onLogout}
@@ -73,12 +91,17 @@ const HomeScreen = ({ onNavigate, onLogout }: {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-retro-white-lines opacity-80 font-pixel text-sm mb-4">
-                  {state.manager ? 
-                    '🎮 Continue gerenciando seu clube' : 
-                    '🏆 Escolha um clube e comece sua carreira'
-                  }
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-retro-white-lines opacity-80 font-pixel text-sm">
+                      {state.manager ? 
+                        '🎮 Continue gerenciando seu clube' : 
+                        '🏆 Escolha um clube e comece sua carreira'
+                      }
+                    </p>
+                  </div>
+                  <PlayerSprite position="MID" size="small" />
+                </div>
                 <PixelButton
                   onClick={handleGameEntry}
                   variant="primary"
@@ -97,9 +120,14 @@ const HomeScreen = ({ onNavigate, onLogout }: {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-retro-white-lines opacity-80 font-pixel text-sm mb-4">
-                  🏟️ Crie uma liga privada e convide seus amigos para jogar
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-retro-white-lines opacity-80 font-pixel text-sm">
+                      🏟️ Crie uma liga privada e convide seus amigos para jogar
+                    </p>
+                  </div>
+                  <SoccerFieldSprite size="small" />
+                </div>
                 <PixelButton
                   onClick={() => onNavigate('league-creation')}
                   variant="success"
@@ -118,9 +146,14 @@ const HomeScreen = ({ onNavigate, onLogout }: {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-retro-white-lines opacity-80 font-pixel text-sm mb-4">
-                  🔍 Encontre e participe de campeonatos criados por outros jogadores
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-retro-white-lines opacity-80 font-pixel text-sm">
+                      🔍 Encontre e participe de campeonatos criados por outros jogadores
+                    </p>
+                  </div>
+                  <PlayerSprite position="ATK" size="small" teamColor="#F44336" />
+                </div>
                 <PixelButton
                   onClick={() => onNavigate('league-browser')}
                   variant="secondary"
@@ -139,9 +172,14 @@ const HomeScreen = ({ onNavigate, onLogout }: {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-retro-white-lines opacity-80 font-pixel text-sm mb-4">
-                  ⚙️ Ajuste suas preferências e configurações da conta
-                </p>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-retro-white-lines opacity-80 font-pixel text-sm">
+                      ⚙️ Ajuste suas preferências e configurações da conta
+                    </p>
+                  </div>
+                  <PlayerSprite position="GK" size="small" teamColor="#FF9800" />
+                </div>
                 <PixelButton
                   variant="secondary"
                   className="w-full opacity-60"

@@ -1,4 +1,3 @@
-
 import { GameProvider, useGame } from '@/contexts/GameContext';
 import AuthScreen from '@/components/auth/AuthScreen';
 import HomeScreen from '@/components/game/HomeScreen';
@@ -8,14 +7,16 @@ import LeagueCreationScreen from '@/components/game/LeagueCreationScreen';
 import LeagueBrowserScreen from '@/components/game/LeagueBrowserScreen';
 import LineupScreen from '@/components/game/LineupScreen';
 import LeagueStandingsScreen from '@/components/game/LeagueStandingsScreen';
+import WelcomeTutorial from '@/components/game/WelcomeTutorial';
 import { useState } from 'react';
 
-type Screen = 'auth' | 'home' | 'club-selection' | 'dashboard' | 'league-creation' | 'league-browser' | 'lineup' | 'standings';
+type Screen = 'auth' | 'tutorial' | 'home' | 'club-selection' | 'dashboard' | 'league-creation' | 'league-browser' | 'lineup' | 'standings';
 
 const GameApp = () => {
   const { state, dispatch, selectClub, refreshClub } = useGame();
   const [currentScreen, setCurrentScreen] = useState<Screen>('auth');
   const [selectedLeague, setSelectedLeague] = useState<{ id: string; name: string } | null>(null);
+  const [hasSeenTutorial, setHasSeenTutorial] = useState(false);
 
   // Loading screen
   if (state.isLoading) {
@@ -34,14 +35,47 @@ const GameApp = () => {
       <AuthScreen 
         onAuthSuccess={(user, hasManager) => {
           console.log('Auth success:', user, hasManager);
+          
+          // Verificar se é primeiro login (sem manager ou sem tutorial visto)
+          const isFirstTime = !hasManager || !hasSeenTutorial;
+          
           if (hasManager && state.manager?.current_club_id) {
-            // Usuário tem manager e clube - ir direto para dashboard
-            setCurrentScreen('dashboard');
+            // Usuário tem manager e clube
+            if (isFirstTime) {
+              setCurrentScreen('tutorial');
+            } else {
+              setCurrentScreen('dashboard');
+            }
           } else if (hasManager) {
-            // Usuário tem manager mas não tem clube - ir para seleção
+            // Usuário tem manager mas não tem clube
+            if (isFirstTime) {
+              setCurrentScreen('tutorial');
+            } else {
+              setCurrentScreen('club-selection');
+            }
+          } else {
+            // Usuário não tem manager - ir para tutorial
+            setCurrentScreen('tutorial');
+          }
+        }}
+      />
+    );
+  }
+
+  // Mostrar tutorial para novos usuários
+  if (currentScreen === 'tutorial') {
+    return (
+      <WelcomeTutorial 
+        managerName={state.user?.user_metadata?.name || state.user?.email || 'Treinador'}
+        onComplete={() => {
+          setHasSeenTutorial(true);
+          
+          // Após tutorial, verificar próximo passo
+          if (state.manager?.current_club_id) {
+            setCurrentScreen('dashboard');
+          } else if (state.manager) {
             setCurrentScreen('club-selection');
           } else {
-            // Usuário não tem manager - ir para home
             setCurrentScreen('home');
           }
         }}
