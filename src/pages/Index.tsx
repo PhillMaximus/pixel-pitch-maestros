@@ -103,10 +103,6 @@ const GameApp = () => {
             setCurrentScreen('standings');
           }}
           onRefreshClub={refreshClub}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
-          }}
         />
       );
 
@@ -121,10 +117,6 @@ const GameApp = () => {
             refreshClub();
             setCurrentScreen('dashboard');
           }}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
-          }}
         />
       ) : null;
 
@@ -134,10 +126,6 @@ const GameApp = () => {
           leagueId={selectedLeague.id}
           leagueName={selectedLeague.name}
           onBack={() => setCurrentScreen('dashboard')}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
-          }}
         />
       ) : null;
 
@@ -146,10 +134,6 @@ const GameApp = () => {
         <LeagueCreationScreen 
           onBack={() => setCurrentScreen('home')}
           onLeagueCreated={() => setCurrentScreen('home')}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
-          }}
         />
       );
 
@@ -158,10 +142,6 @@ const GameApp = () => {
         <LeagueBrowserScreen 
           onBack={() => setCurrentScreen('home')}
           onLeagueJoined={() => setCurrentScreen('home')}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
-          }}
         />
       );
 

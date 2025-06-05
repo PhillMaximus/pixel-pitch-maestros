@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ArrowLeft, Trophy, Users, DollarSign, LogOut } from 'lucide-react';
 import { Club } from '@/types/game';
-import { gameService } from '@/services/gameService';
+import { SupabaseGameService } from '@/services/supabaseGameService';
 import PixelBackground from '@/components/pixel/PixelBackground';
 import PixelCard from '@/components/pixel/PixelCard';
 import PixelButton from '@/components/pixel/PixelButton';
@@ -29,14 +29,10 @@ const ClubSelectionScreen = ({ onBack, onSelectClub, onLogout }: ClubSelectionSc
   const loadAvailableClubs = async () => {
     try {
       console.log('Loading available clubs...');
-      const clubs = await gameService.getAvailableClubs();
+      const clubs = await SupabaseGameService.getAvailableClubs();
       console.log('Clubs loaded:', clubs);
       
-      // Filtrar apenas clubes com pelo menos 20 jogadores
-      const clubsWithEnoughPlayers = clubs.filter(club => club.players.length >= 20);
-      console.log('Clubs with enough players:', clubsWithEnoughPlayers);
-      
-      setAvailableClubs(clubsWithEnoughPlayers);
+      setAvailableClubs(clubs);
     } catch (error) {
       console.error('Erro ao carregar clubes:', error);
       toast({
@@ -138,9 +134,6 @@ const ClubSelectionScreen = ({ onBack, onSelectClub, onLogout }: ClubSelectionSc
             <div className="text-center py-8">
               <p className="text-retro-white-lines font-pixel text-lg">
                 Nenhum clube disponível no momento.
-              </p>
-              <p className="text-retro-white-lines opacity-80 font-pixel text-sm mt-2">
-                Todos os clubes precisam ter pelo menos 20 jogadores.
               </p>
             </div>
           ) : (
