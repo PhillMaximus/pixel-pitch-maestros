@@ -49,17 +49,15 @@ export class SupabaseGameService {
         reputation: clubData.reputation,
         budget: clubData.budget,
         league: clubData.league,
-        stadium: {
-          name: clubData.stadium_name,
-          capacity: clubData.stadium_capacity
-        },
+        stadium_name: clubData.stadium_name,
+        stadium_capacity: clubData.stadium_capacity,
         players: players,
         formation: clubData.formation,
         tactic: clubData.tactic,
         training: (clubData.training_type as TrainingType) || 'physical',
         preTalkType: (clubData.pre_talk_type as PreTalkType) || 'motivational',
-        primaryColor: clubData.primary_color,
-        secondaryColor: clubData.secondary_color,
+        primary_color: clubData.primary_color,
+        secondary_color: clubData.secondary_color,
         emblem: clubData.emblem
       };
 
@@ -115,17 +113,15 @@ export class SupabaseGameService {
           reputation: clubData.reputation,
           budget: clubData.budget,
           league: clubData.league,
-          stadium: {
-            name: clubData.stadium_name,
-            capacity: clubData.stadium_capacity
-          },
+          stadium_name: clubData.stadium_name,
+          stadium_capacity: clubData.stadium_capacity,
           players: players,
           formation: clubData.formation,
           tactic: clubData.tactic,
           training: clubData.training_type as TrainingType,
           preTalkType: clubData.pre_talk_type as PreTalkType,
-          primaryColor: clubData.primary_color,
-          secondaryColor: clubData.secondary_color,
+          primary_color: clubData.primary_color,
+          secondary_color: clubData.secondary_color,
           emblem: clubData.emblem
         });
       }

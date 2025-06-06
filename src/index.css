@@ -1,3 +1,4 @@
+
 @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap");
 @tailwind base;
 @tailwind components;
@@ -169,4 +170,135 @@
     linear-gradient(-45deg, transparent 75%, #2E7D32 75%);
   background-size: 4px 4px;
   background-position: 0 0, 0 2px, 2px -2px, -2px 0px;
+}
+
+/* Pixel Background Styles */
+.pixel-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.pixel-background-field {
+  background: linear-gradient(135deg, #2E7D32 0%, #1B5E20 50%, #2E7D32 100%);
+}
+
+.pixel-background-stadium {
+  background: linear-gradient(135deg, #1565C0 0%, #0D47A1 50%, #1565C0 100%);
+}
+
+.pixel-background-menu {
+  background: linear-gradient(135deg, #424242 0%, #212121 50%, #424242 100%);
+}
+
+/* Soccer Ball Animation */
+.soccer-ball {
+  position: absolute;
+  font-size: 24px;
+  animation: soccer-float linear infinite;
+  opacity: 0.6;
+  z-index: 1;
+}
+
+@keyframes soccer-float {
+  0% {
+    transform: translateY(100vh) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-100px) rotate(360deg);
+  }
+}
+
+/* Field Elements */
+.field-grass {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      rgba(46, 125, 50, 0.3) 0px,
+      rgba(46, 125, 50, 0.3) 20px,
+      rgba(27, 94, 32, 0.3) 20px,
+      rgba(27, 94, 32, 0.3) 40px
+    );
+}
+
+.field-center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.field-goals {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 40px;
+  height: 80px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-left: none;
+  transform: translateY(-50%);
+}
+
+.field-goals::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 40px;
+  height: 80px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-right: none;
+  transform: translateY(-50%) translateX(calc(100vw - 80px));
+}
+
+/* Stadium Elements */
+.stadium-stands {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      rgba(21, 101, 192, 0.2) 0px,
+      rgba(21, 101, 192, 0.2) 50px,
+      rgba(13, 71, 161, 0.2) 50px,
+      rgba(13, 71, 161, 0.2) 100px
+    );
+}
+
+.field-lines {
+  position: absolute;
+  top: 20%;
+  left: 10%;
+  width: 80%;
+  height: 60%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Menu Elements */
+.menu-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 25% 25%, rgba(66, 66, 66, 0.3) 2px, transparent 2px),
+    radial-gradient(circle at 75% 75%, rgba(33, 33, 33, 0.3) 2px, transparent 2px);
+  background-size: 50px 50px;
 }

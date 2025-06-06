@@ -102,13 +102,11 @@ const mockClubs: Club[] = [
     tactic: 'balanced',
     training: 'physical',
     preTalkType: 'motivational',
-    primaryColor: '#4CAF50',
-    secondaryColor: '#FFFFFF',
+    primary_color: '#4CAF50',
+    secondary_color: '#FFFFFF',
     emblem: '🌟',
-    stadium: {
-      name: 'Estádio da Esperança',
-      capacity: 15000
-    },
+    stadium_name: 'Estádio da Esperança',
+    stadium_capacity: 15000,
     players: []
   },
   {
@@ -121,13 +119,11 @@ const mockClubs: Club[] = [
     tactic: 'attacking',
     training: 'technical',
     preTalkType: 'motivational',
-    primaryColor: '#F44336',
-    secondaryColor: '#FFFFFF',
+    primary_color: '#F44336',
+    secondary_color: '#FFFFFF',
     emblem: '🏆',
-    stadium: {
-      name: 'Arena Cidade',
-      capacity: 20000
-    },
+    stadium_name: 'Arena Cidade',
+    stadium_capacity: 20000,
     players: []
   },
   {
@@ -140,13 +136,11 @@ const mockClubs: Club[] = [
     tactic: 'defensive',
     training: 'physical',
     preTalkType: 'pressure',
-    primaryColor: '#FF9800',
-    secondaryColor: '#1976D2',
+    primary_color: '#FF9800',
+    secondary_color: '#1976D2',
     emblem: '🛡️',
-    stadium: {
-      name: 'Estádio União',
-      capacity: 12000
-    },
+    stadium_name: 'Estádio União',
+    stadium_capacity: 12000,
     players: []
   },
   {
@@ -159,13 +153,11 @@ const mockClubs: Club[] = [
     tactic: 'balanced',
     training: 'tactical',
     preTalkType: 'tactical',
-    primaryColor: '#9C27B0',
-    secondaryColor: '#FFC107',
+    primary_color: '#9C27B0',
+    secondary_color: '#FFC107',
     emblem: '⚡',
-    stadium: {
-      name: 'Arena Esporte',
-      capacity: 18000
-    },
+    stadium_name: 'Arena Esporte',
+    stadium_capacity: 18000,
     players: []
   },
   {
@@ -178,13 +170,11 @@ const mockClubs: Club[] = [
     tactic: 'counter-attack',
     training: 'mental',
     preTalkType: 'relaxed',
-    primaryColor: '#3F51B5',
-    secondaryColor: '#FFFFFF',
+    primary_color: '#3F51B5',
+    secondary_color: '#FFFFFF',
     emblem: '🦅',
-    stadium: {
-      name: 'Campo do Grêmio',
-      capacity: 14000
-    },
+    stadium_name: 'Campo do Grêmio',
+    stadium_capacity: 14000,
     players: []
   },
   {
@@ -197,13 +187,11 @@ const mockClubs: Club[] = [
     tactic: 'defensive',
     training: 'physical',
     preTalkType: 'motivational',
-    primaryColor: '#795548',
-    secondaryColor: '#4CAF50',
+    primary_color: '#795548',
+    secondary_color: '#4CAF50',
     emblem: '🌾',
-    stadium: {
-      name: 'Estádio Rural',
-      capacity: 10000
-    },
+    stadium_name: 'Estádio Rural',
+    stadium_capacity: 10000,
     players: []
   }
 ];
