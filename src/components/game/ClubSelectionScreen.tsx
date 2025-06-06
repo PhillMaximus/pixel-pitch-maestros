@@ -1,78 +1,92 @@
 
-import { useState, useEffect } from 'react';
-import { ArrowLeft, Trophy, Users, DollarSign, LogOut } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useGame } from '@/contexts/GameContext';
 import { Club } from '@/types/game';
 import { SupabaseGameService } from '@/services/supabaseGameService';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ArrowLeft, Users, Trophy, MapPin, DollarSign, Target } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 import PixelBackground from '@/components/pixel/PixelBackground';
-import PixelCard from '@/components/pixel/PixelCard';
-import PixelButton from '@/components/pixel/PixelButton';
-import BackgroundMusic from '@/components/audio/BackgroundMusic';
-import { CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
+import PlayerSprite from '@/components/retro/PlayerSprite';
+import SoccerFieldSprite from '@/components/retro/SoccerFieldSprite';
 
 interface ClubSelectionScreenProps {
   onBack: () => void;
   onSelectClub: (clubId: string) => void;
-  onLogout: () => void;
 }
 
-const ClubSelectionScreen = ({ onBack, onSelectClub, onLogout }: ClubSelectionScreenProps) => {
-  const [availableClubs, setAvailableClubs] = useState<Club[]>([]);
+const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps) => {
+  const { state } = useGame();
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selecting, setSelecting] = useState<string | null>(null);
+  const [selectedClubId, setSelectedClubId] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    loadAvailableClubs();
-  }, []);
+    const loadClubs = async () => {
+      try {
+        const availableClubs = await SupabaseGameService.getAvailableClubs();
+        // Filtrar apenas clubes pequenos para iniciantes
+        const smallClubs = availableClubs.filter(club => club.reputation <= 60);
+        setClubs(smallClubs);
+      } catch (error) {
+        console.error('Erro ao carregar clubes:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar clubes disponíveis",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const loadAvailableClubs = async () => {
+    loadClubs();
+  }, [toast]);
+
+  const handleSelectClub = async () => {
+    if (!selectedClubId) return;
+    
     try {
-      console.log('Loading available clubs...');
-      const clubs = await SupabaseGameService.getAvailableClubs();
-      console.log('Clubs loaded:', clubs);
+      setLoading(true);
+      await onSelectClub(selectedClubId);
       
-      setAvailableClubs(clubs);
+      toast({
+        title: "Clube selecionado!",
+        description: "Bem-vindo ao seu novo clube. Boa sorte, treinador!",
+      });
     } catch (error) {
-      console.error('Erro ao carregar clubes:', error);
+      console.error('Erro ao selecionar clube:', error);
       toast({
         title: "Erro",
-        description: "Erro ao carregar clubes disponíveis",
-        variant: "destructive"
+        description: "Erro ao selecionar clube",
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSelectClub = async (clubId: string) => {
-    console.log('Selecting club:', clubId);
-    setSelecting(clubId);
-    
-    try {
-      toast({
-        title: "Sucesso!",
-        description: "Clube selecionado com sucesso",
-      });
+  const getReputationText = (reputation: number) => {
+    if (reputation <= 30) return "Iniciante";
+    if (reputation <= 50) return "Amador";
+    if (reputation <= 70) return "Semi-Profissional";
+    return "Profissional";
+  };
 
-      // Call the parent callback
-      onSelectClub(clubId);
-    } catch (error) {
-      console.error('Erro ao selecionar clube:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao selecionar clube. Tente novamente.",
-        variant: "destructive"
-      });
-    } finally {
-      setSelecting(null);
-    }
+  const getReputationColor = (reputation: number) => {
+    if (reputation <= 30) return "#F44336";
+    if (reputation <= 50) return "#FF9800";
+    if (reputation <= 70) return "#FFC107";
+    return "#4CAF50";
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-retro-green-field flex items-center justify-center">
-        <div className="text-retro-white-lines font-pixel text-xl animate-pulse">
+        <PixelBackground type="field" />
+        <div className="text-retro-white-lines font-pixel text-xl animate-pulse relative z-10">
           Carregando clubes disponíveis...
         </div>
       </div>
@@ -81,145 +95,158 @@ const ClubSelectionScreen = ({ onBack, onSelectClub, onLogout }: ClubSelectionSc
 
   return (
     <div className="min-h-screen relative">
-      <PixelBackground type="stadium" />
+      <PixelBackground type="field" />
       
+      {/* Elementos decorativos */}
+      <div className="absolute top-10 left-10 opacity-20 z-0">
+        <SoccerFieldSprite size="large" />
+      </div>
+      <div className="absolute bottom-10 right-10 opacity-20 z-0">
+        <PlayerSprite position="ATK" size="large" teamColor="#FFD700" />
+      </div>
+      
+      {/* Header */}
       <div className="bg-retro-green-dark/95 text-retro-white-lines border-b-4 border-retro-yellow-highlight relative z-10">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <PixelButton
+              <Button
                 onClick={onBack}
-                variant="secondary"
-                size="sm"
+                variant="outline"
+                className="border-retro-white-lines text-retro-white-lines hover:bg-retro-white-lines hover:text-retro-green-dark font-pixel"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                <span>Voltar</span>
-              </PixelButton>
+                Voltar
+              </Button>
+              
               <div>
-                <h1 className="text-xl font-pixel font-bold">Escolha seu Clube</h1>
-                <p className="text-sm text-retro-yellow-highlight">
-                  Comece sua carreira como treinador
+                <h1 className="text-2xl font-pixel font-bold">⚽ Seleção de Clube ⚽</h1>
+                <p className="text-retro-yellow-highlight font-pixel">
+                  Escolha seu primeiro clube, {state.user?.user_metadata?.name || 'Treinador'}!
                 </p>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <BackgroundMusic className="mr-4" volume={0.2} autoPlay={true} />
-              
-              <PixelButton
-                onClick={onLogout}
-                variant="danger"
-                size="sm"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                <span>Sair</span>
-              </PixelButton>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Conteúdo principal */}
       <div className="container mx-auto px-4 py-8 relative z-10">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-pixel font-bold text-retro-white-lines mb-2 drop-shadow-lg">
-              Clubes Disponíveis
-            </h2>
-            <p className="text-retro-white-lines opacity-80 font-pixel drop-shadow-md">
-              Escolha um clube pequeno e construa sua reputação como treinador
-            </p>
-          </div>
-
-          {availableClubs.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-retro-white-lines font-pixel text-lg">
-                Nenhum clube disponível no momento.
+          
+          {/* Instruções */}
+          <Card className="mb-8 bg-retro-gray-dark/90 border-retro-yellow-highlight border-2">
+            <CardHeader>
+              <CardTitle className="font-pixel text-retro-white-lines text-center">
+                🎯 Começando sua Carreira
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-retro-white-lines font-pixel text-center text-sm">
+                Como novo treinador, você deve começar em um clube pequeno. 
+                Prove seu valor e clubes maiores irão te procurar!
               </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableClubs.map((club) => (
-                <PixelCard 
-                  key={club.id} 
-                  className="hover:border-retro-yellow-highlight transition-colors border-2"
-                  style={{ borderColor: club.primaryColor || '#4CAF50' }}
-                >
-                  <CardHeader 
-                    className="text-center"
+            </CardContent>
+          </Card>
+
+          {/* Lista de clubes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {clubs.map((club) => (
+              <Card 
+                key={club.id}
+                className={`cursor-pointer transition-all duration-300 border-2 ${
+                  selectedClubId === club.id 
+                    ? 'border-retro-yellow-highlight bg-retro-yellow-highlight/20 transform scale-105' 
+                    : 'border-retro-gray-concrete bg-retro-gray-dark/90 hover:border-retro-white-lines'
+                }`}
+                onClick={() => setSelectedClubId(club.id)}
+              >
+                <CardHeader className="text-center">
+                  <div 
+                    className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center text-3xl mb-2"
                     style={{ 
-                      backgroundColor: club.primaryColor || '#4CAF50',
-                      color: club.secondaryColor || '#FFFFFF'
+                      backgroundColor: club.primary_color,
+                      color: club.secondary_color 
                     }}
                   >
-                    <div className="flex items-center justify-center mb-2">
-                      <span className="text-3xl mr-2">{club.emblem || '⚽'}</span>
+                    {club.emblem}
+                  </div>
+                  <CardTitle className="font-pixel text-retro-white-lines text-lg">
+                    {club.name}
+                  </CardTitle>
+                </CardHeader>
+                
+                <CardContent className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-pixel text-xs text-retro-white-lines opacity-80">
+                      Reputação:
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span 
+                        className="font-pixel text-xs px-2 py-1 rounded"
+                        style={{ 
+                          backgroundColor: getReputationColor(club.reputation),
+                          color: '#FFFFFF'
+                        }}
+                      >
+                        {getReputationText(club.reputation)}
+                      </span>
+                      <span className="font-pixel text-xs text-retro-white-lines">
+                        {club.reputation}/100
+                      </span>
                     </div>
-                    <CardTitle className="font-pixel">
-                      {club.name}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div className="flex items-center">
-                        <Trophy className="w-4 h-4 text-retro-yellow-highlight mr-2" />
-                        <div>
-                          <p className="text-retro-white-lines opacity-80 font-pixel text-xs">Reputação</p>
-                          <p className="font-pixel text-retro-white-lines">{club.reputation}/100</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <DollarSign className="w-4 h-4 text-retro-yellow-highlight mr-2" />
-                        <div>
-                          <p className="text-retro-white-lines opacity-80 font-pixel text-xs">Orçamento</p>
-                          <p className="font-pixel text-retro-white-lines">€{(club.budget / 1000).toFixed(0)}k</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <Users className="w-4 h-4 text-retro-yellow-highlight mr-2" />
-                        <div>
-                          <p className="text-retro-white-lines opacity-80 font-pixel text-xs">Elenco</p>
-                          <p className="font-pixel text-retro-white-lines">{club.players.length} jogadores</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center">
-                        <div 
-                          className="w-4 h-4 rounded mr-2"
-                          style={{ backgroundColor: club.primaryColor || '#4CAF50' }}
-                        ></div>
-                        <div>
-                          <p className="text-retro-white-lines opacity-80 font-pixel text-xs">Estádio</p>
-                          <p className="font-pixel text-retro-white-lines">{(club.stadium.capacity / 1000).toFixed(0)}k</p>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="text-center">
-                      <p className="text-retro-white-lines opacity-80 font-pixel text-xs mb-2">
-                        {club.stadium.name}
-                      </p>
-                      <p className="text-retro-white-lines opacity-80 font-pixel text-xs">
-                        Liga: {club.league}
-                      </p>
-                    </div>
-                    
-                    <PixelButton
-                      onClick={() => handleSelectClub(club.id)}
-                      variant="success"
-                      className="w-full"
-                      disabled={selecting === club.id}
-                      style={{
-                        backgroundColor: club.primaryColor || '#4CAF50',
-                        color: club.secondaryColor || '#FFFFFF'
-                      }}
-                    >
-                      {selecting === club.id ? 'Selecionando...' : 'Escolher Este Clube'}
-                    </PixelButton>
-                  </CardContent>
-                </PixelCard>
-              ))}
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <MapPin className="w-3 h-3 text-retro-yellow-highlight" />
+                    <span className="font-pixel text-xs text-retro-white-lines">
+                      {club.stadium_name}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Users className="w-3 h-3 text-retro-yellow-highlight" />
+                    <span className="font-pixel text-xs text-retro-white-lines">
+                      Capacidade: {club.stadium_capacity.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="w-3 h-3 text-retro-yellow-highlight" />
+                    <span className="font-pixel text-xs text-retro-white-lines">
+                      Orçamento: €{club.budget.toLocaleString()}
+                    </span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Trophy className="w-3 h-3 text-retro-yellow-highlight" />
+                    <span className="font-pixel text-xs text-retro-white-lines">
+                      Liga: {club.league}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Botão de confirmação */}
+          {selectedClubId && (
+            <div className="text-center mt-8">
+              <Card className="inline-block bg-retro-yellow-highlight/90 border-retro-green-dark border-2">
+                <CardContent className="p-6">
+                  <Button
+                    onClick={handleSelectClub}
+                    disabled={loading}
+                    className="bg-retro-green-dark text-retro-white-lines hover:bg-retro-green-field font-pixel text-lg px-8 py-3"
+                  >
+                    <Target className="w-5 h-5 mr-2" />
+                    {loading ? 'Selecionando...' : 'Confirmar Escolha'}
+                  </Button>
+                  <p className="font-pixel text-xs text-retro-green-dark mt-2">
+                    Você pode mudar de clube mais tarde com base em seu desempenho
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           )}
         </div>
