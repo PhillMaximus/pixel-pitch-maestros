@@ -165,11 +165,11 @@ const ClubSelectionScreen = ({ onBack, onSelectClub }: ClubSelectionScreenProps)
                   <div 
                     className="w-16 h-16 mx-auto rounded-lg flex items-center justify-center text-3xl mb-2"
                     style={{ 
-                      backgroundColor: club.primary_color,
-                      color: club.secondary_color 
+                      backgroundColor: club.primary_color || '#2196F3',
+                      color: club.secondary_color || '#FFFFFF'
                     }}
                   >
-                    {club.emblem}
+                    {club.emblem || '⚽'}
                   </div>
                   <CardTitle className="font-pixel text-retro-white-lines text-lg">
                     {club.name}

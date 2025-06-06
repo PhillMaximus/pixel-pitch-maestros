@@ -123,10 +123,6 @@ const GameApp = () => {
             console.error('Error selecting club in Index:', error);
           }
         }}
-        onLogout={() => {
-          dispatch({ type: 'LOGOUT' });
-          setCurrentScreen('auth');
-        }}
       />
     );
   }
@@ -220,10 +216,6 @@ const GameApp = () => {
             } catch (error) {
               console.error('Error selecting club in switch:', error);
             }
-          }}
-          onLogout={() => {
-            dispatch({ type: 'LOGOUT' });
-            setCurrentScreen('auth');
           }}
         />
       );

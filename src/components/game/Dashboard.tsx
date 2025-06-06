@@ -111,8 +111,8 @@ const Dashboard = ({ onBack, onNavigateToLineup, onNavigateToStandings, onRefres
     );
   }
 
-  const clubPrimaryColor = club.primaryColor || club.primary_color || '#4CAF50';
-  const clubSecondaryColor = club.secondaryColor || club.secondary_color || '#FFFFFF';
+  const clubPrimaryColor = club.primary_color || '#4CAF50';
+  const clubSecondaryColor = club.secondary_color || '#FFFFFF';
 
   return (
     <div className="min-h-screen relative">

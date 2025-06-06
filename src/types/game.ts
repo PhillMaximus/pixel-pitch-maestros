@@ -27,17 +27,15 @@ export interface Club {
   reputation: number;
   budget: number;
   league: string;
-  stadium: {
-    name: string;
-    capacity: number;
-  };
+  stadium_name: string;
+  stadium_capacity: number;
   players: Player[];
   formation: string;
   tactic?: string;
   training: TrainingType;
   preTalkType: PreTalkType;
-  primaryColor?: string;
-  secondaryColor?: string;
+  primary_color?: string;
+  secondary_color?: string;
   emblem?: string;
 }
 
